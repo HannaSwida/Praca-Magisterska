@@ -7,10 +7,10 @@ import librosa
 def load(path, num_samples):
     wav, _ = librosa.load(path, sr=16000)
     start = random.randint(0, wav.shape[0] - num_samples)
-    return wav[start : (start + num_samples)]
+    return wav[start: (start + num_samples)]
 
 
-class Reader():
+class Reader:
     def __init__(self, data_path, batch_size=128, num_samples=3200):
         self.batch_size = batch_size
         self.num_samples = num_samples
@@ -30,8 +30,10 @@ class Reader():
 
         self.speakers = speakers
 
+        self.speaker_list = list(sorted(speakers.keys()))
+
     def next(self):
-        # (batch size, utt in item, samples)
+        # (batch size, 3 utterances, samples)
         batch = []
         speakers = []
 
@@ -46,6 +48,13 @@ class Reader():
                 load(speaker2utt1, self.num_samples)
             ])
 
-            speakers.append([speaker1, speaker2])
+            speakers.append([
+                self.speaker_to_id(speaker1),
+                self.speaker_to_id(speaker1),
+                self.speaker_to_id(speaker2)
+            ])
 
         return np.array(batch), np.array(speakers)
+
+    def speaker_to_id(self, speaker_name):
+        return self.speaker_list.index(speaker_name)
