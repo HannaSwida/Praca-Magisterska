@@ -1,16 +1,19 @@
 from pathlib import Path
 import random
 import numpy as np
-import librosa
-
+import librosa, librosa.display
+import matplotlib.pyplot as plt
 
 def load(path, num_samples):
-    wav, _ = librosa.load(path, sr=16000)
+    wav, sr = librosa.load(path, sr=16000)
+    #print(wav.shape)
+    #librosa.display.waveplot(wav, sr)
+    #plt.show()
     start = random.randint(0, wav.shape[0] - num_samples)
     return wav[start: (start + num_samples)]
 
 
-class Reader:
+class Loader:
     def __init__(self, data_path, batch_size=128, num_samples=3200):
         self.batch_size = batch_size
         self.num_samples = num_samples
@@ -28,9 +31,12 @@ class Reader:
 
             speakers[speaker_dir.name] = speaker_utterances
 
-        self.speakers = speakers
 
+        self.speakers = speakers
         self.speaker_list = list(sorted(speakers.keys()))
+
+    def speaker_to_id(self, speaker_name):
+        return self.speaker_list.index(speaker_name)
 
     def next(self):
         # (batch size, 3 utterances, samples)
@@ -53,8 +59,4 @@ class Reader:
                 self.speaker_to_id(speaker1),
                 self.speaker_to_id(speaker2)
             ])
-
         return np.array(batch), np.array(speakers)
-
-    def speaker_to_id(self, speaker_name):
-        return self.speaker_list.index(speaker_name)
