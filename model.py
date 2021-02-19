@@ -13,18 +13,18 @@ class Model(nn.Module):
 
     def forward(self, input, speakers):
         input = input.reshape((128 * 3, 1, 3200))
-        embeddings = self.sinc_net(input)
+        embeddings = self.sinc_net(input) # TODO
         speakers_pred = self.classifier(embeddings)
         embeddings = embeddings.reshape((128, 3, constants.embedding_size))
         S1U1 = embeddings[:, 0, :]
         S1U2 = embeddings[:, 1, :]
         S2U1 = embeddings[:, 2, :]
-        pp = torch.cat((S1U1, S1U2), 1)#pospara
-        np = torch.cat((S1U1, S2U1), 1)#negpara
-        score_pp = self.discriminator(pp)
-        score_np = self.discriminator(np)
+        posp = torch.cat((S1U1, S1U2), 1)
+        negp = torch.cat((S1U1, S2U1), 1)
+        score_posp = self.discriminator(posp)
+        score_negp = self.discriminator(negp)
 
-        loss = (1 - score_pp) ** 2 + score_np ** 2 + F.cross_entropy(speakers_pred, speakers.reshape((-1)))
+        loss = (1 - score_posp) ** 2 + score_negp ** 2 + F.cross_entropy(speakers_pred, speakers.reshape((-1)))
         # TODO
         return loss.mean(0)
 
@@ -40,6 +40,30 @@ class Discriminator(nn.Module):
         x = F.relu(self.fc1(x))
         x = self.fc2(x)
         return torch.sigmoid(x)
+
+
+class Encoder(nn.Module):
+    def __init__(self):
+        super(Encoder, self).__init__()
+        self.sinc_conv = nn.Conv1d(1, 80, 251)# TODO: Sinc-based?
+        self.conv2 = nn.Conv1d(80, 60, 5)
+        self.conv3 = nn.Conv1d(60, 60, 5)
+        self.lr = nn.LeakyReLU(0.1) #
+        self.fc1 = nn.Linear(60, constants.embedding_size*2)
+        self.fc2 = nn.Linear(constants.embedding_size*2, constants.embedding_size)
+
+    def forward(self, x):
+        x = self.sinc_conv(x) #TODO
+        x = self.conv2(x)
+        x = self.conv3(x)
+        # TODO: x = layer_norm
+        x = x.mean(2)
+        x = self.fc1(x)
+        x = self.lr(x)
+        x = self.fc2(x)
+        x = self.lr(x)
+        # TODO: x = leaky_relu(x)
+        return x
 
 
 class Classifier(nn.Module):
