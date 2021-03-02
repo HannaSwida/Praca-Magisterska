@@ -1,5 +1,5 @@
-from VoxCelebLoader import VoxCelebLoader
-from Model import Model
+from vox_celeb_loader import VoxCelebLoader
+from model import Model
 import torch
 from torch.utils.data import DataLoader
 import torch.optim as optim
