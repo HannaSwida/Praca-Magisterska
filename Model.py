@@ -3,6 +3,7 @@ import torch as torch
 import torch.nn.functional as Fun
 import constants
 
+
 class Model(nn.Module):
     def __init__(self, num_speakers):
         super(Model, self).__init__()
@@ -13,8 +14,8 @@ class Model(nn.Module):
 
     def forward(self, input, speakers):
         input = input.reshape((128 * 3, 1, 3200))
-        embeddings = self.encoder(input) # TODO
-        speakers_pred = self.classifier(embeddings)
+        embeddings = self.encoder(input)  # TODO
+        speakers_dis = self.classifier(embeddings)
         embeddings = embeddings.reshape((128, 3, constants.embedding_size))
         S1U1 = embeddings[:, 0, :]
         S1U2 = embeddings[:, 1, :]
@@ -24,23 +25,23 @@ class Model(nn.Module):
         score_posp = self.discriminator(posp)
         score_negp = self.discriminator(negp)
 
-        #loss = (1 - score_posp) ** 2 + score_negp ** 2 + Fun.cross_entropy(speakers_pred)
+        loss = (1 - score_posp) ** 2 + score_negp ** 2 + Fun.cross_entropy(speakers_dis, target=speakers.reshape(-1))
         #  TODO
-        return 0
+        return loss.mean()
 
 
 class Encoder(nn.Module):
     def __init__(self):
         super(Encoder, self).__init__()
-        self.sinc_convolution = nn.Conv1d(1, 80, 251)# TODO: Sinc-based? spr gotowe
+        self.sinc_convolution = nn.Conv1d(1, 80, 251)  # TODO: Sinc-based? spr gotowe
         self.convolution2 = nn.Conv1d(80, 60, 5)
         self.convolution3 = nn.Conv1d(60, 60, 5)
-        self.lr = nn.LeakyReLU(0.1) # ?
-        self.fc1 = nn.Linear(60, constants.embedding_size*2)
-        self.fc2 = nn.Linear(constants.embedding_size*2, constants.embedding_size)
+        self.lr = nn.LeakyReLU(0.1)  # ?
+        self.fc1 = nn.Linear(60, constants.embedding_size * 2)
+        self.fc2 = nn.Linear(constants.embedding_size * 2, constants.embedding_size)
 
     def forward(self, x):
-        x = self.sinc_convolution(x) #TODO
+        x = self.sinc_convolution(x)  # TODO
         x = self.convolution2(x)
         x = self.convolution3(x)
         # TODO: x = layer_norm
@@ -57,12 +58,13 @@ class Classifier(nn.Module):
     def __init__(self, num_speakers):
         super(Classifier, self).__init__()
         self.fc1 = nn.Linear(constants.embedding_size, constants.embedding_size)
-        #self.fc2 = nn.Linear(constants.embedding_size, constants.embedding_size)
+        # self.fc2 = nn.Linear(constants.embedding_size, constants.embedding_size)
 
     def forward(self, x):
         x = Fun.relu(self.fc1(x))
         result = Fun.softmax(x, dim=1)
         return result
+
 
 class Discriminator(nn.Module):
     def __init__(self):
@@ -74,4 +76,3 @@ class Discriminator(nn.Module):
         x = Fun.relu(self.fc1(x))
         out = self.fc2(x)
         return torch.sigmoid(out)
-
