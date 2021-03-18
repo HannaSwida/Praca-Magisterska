@@ -16,6 +16,20 @@ def main():
 
     model.train()
 
+    checkpoint = {
+        "epoch": 90,
+        "model_state": model.state_dict(),
+        "optim_state": optimizer.state_dict()
+    }
+
+   # torch.save(checkpoint,"checkpoint.pth")
+
+    loaded_chk = torch.load("checkpoint.pth")
+    epoch = loaded_chk["epoch"]
+    model = Model(len(vox_loader.speakers))
+    model.load_state_dict(checkpoint["model_state"])
+    optimizer.load_state_dict(checkpoint["optim_state"])
+
     for epoch in range(100):
         for batch, speakers in vox_loader:
             optimizer.zero_grad()
@@ -23,6 +37,13 @@ def main():
             print(loss)
             loss.backward()
             optimizer.step()
+
+    FILE = "model.pth"
+    torch.save(model.state_dict(), FILE)
+
+    loaded_model = Model(len(vox_loader.speakers))
+    loaded_model.load_state_dict(torch.load(FILE))
+    loaded_model.eval()
 
 
 if __name__ == "__main__":

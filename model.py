@@ -46,9 +46,7 @@ class Encoder(nn.Module):
         self.layer_norm3 = nn.LayerNorm((60, 2942))
 
     def forward(self, x):
-        print(x)
         x = self.input_norm(x)
-        print(x)
         x = self.sinc_convolution(x)
         x = self.layer_norm1(x)
         x = self.convolution2(x)
