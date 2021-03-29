@@ -4,6 +4,7 @@ import numpy as np
 import librosa, librosa.display
 import matplotlib.pyplot as plt
 from torch.utils.data import Dataset, DataLoader
+from constants import BATCHES_PER_EPOCH
 
 
 def load(path, num_samples):
@@ -29,9 +30,11 @@ class VoxCelebLoader(Dataset):
 
             for video_dir in speaker_dir.iterdir():
                 for utterance_wav in video_dir.iterdir():
-                    speaker_utterances.append(utterance_wav)
+                    if utterance_wav.name.endswith(".wav"):
+                        speaker_utterances.append(utterance_wav)
 
-            speakers[speaker_dir.name] = speaker_utterances
+            if len(speaker_utterances) > 2:
+                speakers[speaker_dir.name] = speaker_utterances
 
         self.speakers = speakers
         self.speaker_list = list(sorted(speakers.keys()))
@@ -63,4 +66,4 @@ class VoxCelebLoader(Dataset):
         return np.array(batch), np.array(speakers)
 
     def __len__(self):
-        return 1000000
+        return BATCHES_PER_EPOCH
