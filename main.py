@@ -22,19 +22,21 @@ parser.add_argument('--resume', default='', type=str, metavar='PATH',
 parser.add_argument('-e', '--evaluate', dest='evaluate', action='store_true',
                     help='evaluate model on validation set')
 
-best_acc1 = 0
+
+#python main.py --lr 0.01 Voxceleb
 
 
 def main():
     args = parser.parse_args()
 
     if args.data == 'Voxceleb':
-        train_loader = VoxCelebLoader("training-data/voxceleb")
+        voices_loader = VoxCelebLoader("training-data/voxceleb")
 
-    train_loader = DataLoader(dataset=train_loader,
+    train_loader = DataLoader(dataset=voices_loader,
                               shuffle=True,
                               num_workers=2)
-    model = Model(len(train_loader.speakers))
+
+    model = Model(len(voices_loader.speakers))
 
     optimizer = optim.RMSprop(model.parameters(), lr=args.lr, alpha=consts.alpha, eps=1e-07)
 
@@ -51,6 +53,9 @@ def main():
         else:
             print("=> no checkpoint found at '{}'".format(args.resume))
 
+    def save_checkpoint(state, filename):
+        torch.save(state, filename)
+
     model.train()
     for epoch in range(args.start_epoch, args.epochs):
         for batch, speakers in train_loader:
@@ -59,6 +64,11 @@ def main():
             print(loss)
             loss.backward()
             optimizer.step()
+        save_checkpoint({
+            'epoch': epoch + 1,
+            'state_dict': model.state_dict(),
+            'optimizer': optimizer.state_dict(),
+        }, filename="checkpoint_e"+epoch+"pth.tar")
 
 
 if __name__ == "__main__":
