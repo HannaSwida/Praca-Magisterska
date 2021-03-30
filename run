@@ -1,0 +1,3 @@
+#!/bin/bash
+
+docker build -t hanna-mgr . && docker run -v $PWD/training-data:/data -it --rm --gpus all hanna-mgr ./main.py --data /data/voxceleb $@
