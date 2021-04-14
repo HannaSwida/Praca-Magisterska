@@ -36,7 +36,7 @@ class Encoder(nn.Module):
         self.sinc_convolution = sinc_conv(80, 251, 16000)
         self.convolution2 = nn.Conv1d(80, 60, 5)
         self.convolution3 = nn.Conv1d(60, 60, 5)
-        self.lr = nn.LeakyReLU(0.1)  # ?
+        self.lr = nn.LeakyReLU(0.1)
         self.fc1 = nn.Linear(60, constants.embedding_size * 2)
         self.fc2 = nn.Linear(constants.embedding_size * 2, constants.embedding_size)
 
@@ -65,11 +65,9 @@ class Classifier(nn.Module):
     def __init__(self, num_speakers):
         super(Classifier, self).__init__()
         self.fc1 = nn.Linear(constants.embedding_size, constants.embedding_size)
-        self.fc2 = nn.Linear(constants.embedding_size, constants.embedding_size)
 
     def forward(self, x):
         x = Fun.relu(self.fc1(x))
-        x = Fun.relu(self.fc2(x))
         result = Fun.softmax(x, dim=1)
         return result
 

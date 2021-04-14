@@ -13,6 +13,10 @@ def load(path, num_samples):
     # librosa.display.waveplot(wav, sr)
     # plt.show()
     start = random.randint(0, wav.shape[0] - num_samples)
+    print("shape of wav:", wav.shape[0])
+    print("num_samples:", num_samples)
+    print("start", start)
+    print("return", wav[start: (start + num_samples)])
     return wav[start: (start + num_samples)]
 
 
@@ -22,7 +26,6 @@ class VoxCelebLoader(Dataset):
         self.num_samples = num_samples
 
         data_path = Path(data_path)
-
         speakers = {}
 
         for speaker_dir in data_path.iterdir():

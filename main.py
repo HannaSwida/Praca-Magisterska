@@ -10,7 +10,6 @@ import argparse
 import os
 from constants import BATCHES_PER_EPOCH
 
-# TODO GPUCPU
 parser = argparse.ArgumentParser(description='Praca magisterska')
 parser.add_argument('--data', default='training-data/voxceleb',
                     help='dataset name')
@@ -19,12 +18,12 @@ parser.add_argument('--epochs', default=90, type=int, metavar='N',
 parser.add_argument('--start-epoch', default=0, type=int, metavar='N',
                     help='manual epoch number (useful on restarts)')
 parser.add_argument('--lr', '--learning-rate', default=0.1, type=float,
-                    metavar='LR', help='initial learning rate', dest='lr')  # todo
+                    metavar='LR', help='initial learning rate', dest='lr')
 parser.add_argument('--resume', default='', type=str, metavar='PATH',
                     help='path to latest checkpoint (default: none)')
 
 
-#python main.py --lr 0.01
+# python main.py --lr 0.01
 
 
 def main():
@@ -50,15 +49,15 @@ def main():
 
     if args.resume:
         if os.path.isfile(args.resume):
-            print("=> loading checkpoint '{}'".format(args.resume))
+            print("Loading given checkpoint '{}'".format(args.resume))
             checkpoint = torch.load(args.resume)
             args.start_epoch = checkpoint['epoch']
             model.load_state_dict(checkpoint['state_dict'])
             optimizer.load_state_dict(checkpoint['optimizer'])
-            print("=> loaded checkpoint '{}' (epoch {})"
+            print("Loaded given checkpoint '{}' (epoch {})"
                   .format(args.resume, checkpoint['epoch']))
         else:
-            print("=> no checkpoint found at '{}'".format(args.resume))
+            print("No checkpoint found at '{}'".format(args.resume))
 
     def save_checkpoint(state, filename):
         torch.save(state, filename)
