@@ -1,6 +1,7 @@
 #!/usr/bin/env python3.8
 
 from vox_celeb_loader import VoxCelebLoader
+from timit_loader import TimitLoader
 from model import Model
 import torch
 from torch.utils.data import DataLoader
@@ -11,6 +12,8 @@ import os
 from constants import BATCHES_PER_EPOCH
 
 parser = argparse.ArgumentParser(description='Praca magisterska')
+parser.add_argument('--loader', default='voxceleb',
+                    help='dataset type')
 parser.add_argument('--data', default='training-data/voxceleb',
                     help='dataset name')
 parser.add_argument('--epochs', default=90, type=int, metavar='N',
@@ -36,7 +39,12 @@ def main():
     device = torch.device(dev)
     print("Using {}".format(device))
 
-    voices_loader = VoxCelebLoader(args.data)
+    Loader = ({
+        "voxceleb": VoxCelebLoader,
+        "timit": TimitLoader,
+    })[args.loader]
+    
+    voices_loader = Loader(args.data)
 
     train_loader = DataLoader(dataset=voices_loader,
                               shuffle=True,
@@ -54,8 +62,7 @@ def main():
             args.start_epoch = checkpoint['epoch']
             model.load_state_dict(checkpoint['state_dict'])
             optimizer.load_state_dict(checkpoint['optimizer'])
-            print("Loaded given checkpoint '{}' (epoch {})"
-                  .format(args.resume, checkpoint['epoch']))
+            print("Loaded given checkpoint '{}' (epoch {})".format(args.resume, checkpoint['epoch']))
         else:
             print("No checkpoint found at '{}'".format(args.resume))
 

@@ -16,7 +16,7 @@ class Model(nn.Module):
     def forward(self, input, speakers):
         input = input.reshape((128 * 3, 1, 3200))
         embeddings = self.encoder(input)  # TODO
-        speakers_dis = self.classifier(embeddings)
+        speakers_probs = self.classifier(embeddings)
         embeddings = embeddings.reshape((128, 3, constants.embedding_size))
         S1U1 = embeddings[:, 0, :]
         S1U2 = embeddings[:, 1, :]
@@ -26,7 +26,13 @@ class Model(nn.Module):
         score_posp = self.discriminator(posp)
         score_negp = self.discriminator(negp)
 
-        loss = (1 - score_posp) ** 2 + score_negp ** 2 + Fun.cross_entropy(speakers_dis, target=speakers.reshape(-1))
+        # Positive loss weight
+        Exp = 1.0
+        # Negative loss weight
+        Exn = 1.0
+        loss = Exp* (1.0 - score_posp) ** 2 + Exp * score_negp ** 2 + Fun.cross_entropy(speakers_dis, target=speakers.reshape(-1))
+        #loss = Exp * torch.log(score_posp) + Exn * torch.log(1-score_negp) + Fun.cross_entropy(speakers_probs, target=speakers.reshape(-1))
+        print(loss)
         return loss.mean()
 
 
@@ -65,20 +71,21 @@ class Classifier(nn.Module):
     def __init__(self, num_speakers):
         super(Classifier, self).__init__()
         self.fc1 = nn.Linear(constants.embedding_size, constants.embedding_size)
+        self.proj = nn.Linear(constants.embedding_size, num_speakers)
 
     def forward(self, x):
         x = Fun.relu(self.fc1(x))
-        result = Fun.softmax(x, dim=1)
-        return result
+        x = Fun.softmax(self.proj(x), dim=1)
+        return x
 
 
 class Discriminator(nn.Module):
     def __init__(self):
         super(Discriminator, self).__init__()
         self.fc1 = nn.Linear(2 * constants.embedding_size, 2 * constants.embedding_size)
-        self.fc2 = nn.Linear(2 * constants.embedding_size, 1)
+        self.proj = nn.Linear(2 * constants.embedding_size, 1)
 
     def forward(self, x):
         x = Fun.relu(self.fc1(x))
-        out = self.fc2(x)
-        return torch.sigmoid(out)
+        x = self.proj(x)
+        return x

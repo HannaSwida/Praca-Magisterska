@@ -9,14 +9,14 @@ from constants import BATCHES_PER_EPOCH
 
 def load(path, num_samples):
     wav, sr = librosa.load(path, sr=16000)
-    # print(wav.shape)
+    # #print(wav.shape)
     # librosa.display.waveplot(wav, sr)
     # plt.show()
     start = random.randint(0, wav.shape[0] - num_samples)
-    print("shape of wav:", wav.shape[0])
-    print("num_samples:", num_samples)
-    print("start", start)
-    print("return", wav[start: (start + num_samples)])
+    #print("shape of wav:", wav.shape[0])
+    #print("num_samples:", num_samples)
+    #print("start", start)
+    #print("return", wav[start: (start + num_samples)])
     return wav[start: (start + num_samples)]
 
 
