@@ -30,7 +30,7 @@ class Model(nn.Module):
         Exp = 1.0
         # Negative loss weight
         Exn = 1.0
-        loss = Exp* (1.0 - score_posp) ** 2 + Exp * score_negp ** 2 + Fun.cross_entropy(speakers_dis, target=speakers.reshape(-1))
+        loss = Exp* (1.0 - score_posp) ** 2 + Exp * score_negp ** 2 + Fun.cross_entropy(speakers_probs, target=speakers.reshape(-1))
         #loss = Exp * torch.log(score_posp) + Exn * torch.log(1-score_negp) + Fun.cross_entropy(speakers_probs, target=speakers.reshape(-1))
         print(loss)
         return loss.mean()
