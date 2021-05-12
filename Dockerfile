@@ -1,8 +1,6 @@
-FROM pytorch/pytorch:1.8.0-cuda11.1-cudnn8-runtime
+FROM pytorch
 
 RUN apt-get update
-
-RUN apt-get install -y libsndfile1
 
 RUN pip install librosa matplotlib
 
