@@ -83,7 +83,7 @@ def main():
             'epoch': epoch + 1,
             'state_dict': model.state_dict(),
             'optimizer': optimizer.state_dict(),
-        }, filename="checkpoint_e{}.pth.tar".format(epoch))
+        }, filename="./checkpoints/checkpoint_e{}.pth.tar".format(epoch))
 
 
 if __name__ == "__main__":
