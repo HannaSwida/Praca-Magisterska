@@ -54,6 +54,7 @@ class Encoder(nn.Module):
     def forward(self, x):
         x = self.input_norm(x)
         x = self.sinc_convolution(x)
+        #print(x.shape)
         x = self.layer_norm1(x)
         x = self.convolution2(x)
         x = self.layer_norm2(x)
