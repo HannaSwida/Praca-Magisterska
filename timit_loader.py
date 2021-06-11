@@ -4,7 +4,6 @@ import numpy as np
 import librosa, librosa.display
 import matplotlib.pyplot as plt
 from torch.utils.data import Dataset, DataLoader
-from constants import BATCHES_PER_EPOCH
 
 
 def load(path, num_samples):
@@ -45,27 +44,23 @@ class TimitLoader(Dataset):
         return self.speaker_list.index(speaker_name)
 
     def __getitem__(self, _):
-        # (batch size, 3 utterances, samples)
-        batch = []
-        speakers = []
+        # (3 utterances, samples), (3 speaker labels)
+        [speaker1, speaker2] = random.sample(list(self.speakers.keys()), 2)
+        [speaker1utt1, speaker1utt2] = random.sample(self.speakers[speaker1], 2)
+        speaker2utt1 = random.choice(self.speakers[speaker2])
 
-        for i in range(self.batch_size):
-            [speaker1, speaker2] = random.sample(list(self.speakers.keys()), 2)
-            [speaker1utt1, speaker1utt2] = random.sample(self.speakers[speaker1], 2)
-            speaker2utt1 = random.choice(self.speakers[speaker2])
+        triple = [
+            load(speaker1utt1, self.num_samples),
+            load(speaker1utt2, self.num_samples),
+            load(speaker2utt1, self.num_samples)
+        ]
 
-            batch.append([
-                load(speaker1utt1, self.num_samples),
-                load(speaker1utt2, self.num_samples),
-                load(speaker2utt1, self.num_samples)
-            ])
-
-            speakers.append([
-                self.speaker_to_id(speaker1),
-                self.speaker_to_id(speaker1),
-                self.speaker_to_id(speaker2)
-            ])
-        return np.array(batch), np.array(speakers)
+        speaker_labels = [
+            self.speaker_to_id(speaker1),
+            self.speaker_to_id(speaker1),
+            self.speaker_to_id(speaker2)
+        ]
+        return triple, speaker_labels
 
     def __len__(self):
-        return BATCHES_PER_EPOCH
+        return 12800

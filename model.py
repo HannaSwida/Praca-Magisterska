@@ -3,6 +3,7 @@ import torch as torch
 import torch.nn.functional as Fun
 from dnn_models import sinc_conv
 import constants
+from constants import BATCHES_PER_EPOCH
 
 
 class Model(nn.Module):
@@ -14,10 +15,10 @@ class Model(nn.Module):
         self.classifier = Classifier(num_speakers)
 
     def forward(self, input, speakers):
-        input = input.reshape((128 * 3, 1, 3200))
+        input = input.reshape((BATCHES_PER_EPOCH * 3, 1, 3200))
         embeddings = self.encoder(input)  # TODO
         speakers_probs = self.classifier(embeddings)
-        embeddings = embeddings.reshape((128, 3, constants.embedding_size))
+        embeddings = embeddings.reshape((BATCHES_PER_EPOCH, 3, constants.embedding_size))
         S1U1 = embeddings[:, 0, :]
         S1U2 = embeddings[:, 1, :]
         S2U1 = embeddings[:, 2, :]

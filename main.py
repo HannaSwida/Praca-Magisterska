@@ -9,6 +9,7 @@ import torch.optim as optim
 import constants as consts
 import argparse
 import os
+import numpy as np
 from constants import BATCHES_PER_EPOCH
 
 parser = argparse.ArgumentParser(description='Praca magisterska')
@@ -27,6 +28,12 @@ parser.add_argument('--resume', default='', type=str, metavar='PATH',
 
 
 # python main.py --lr 0.01
+
+
+def make_batch(items):
+    samples = [item[0] for item in items]
+    speakers = [item[1] for item in items]
+    return np.array(samples), np.array(speakers)
 
 
 def main():
@@ -48,7 +55,9 @@ def main():
 
     train_loader = DataLoader(dataset=voices_loader,
                               shuffle=True,
-                              num_workers=2)
+                              num_workers=2,
+                              batch_size=BATCHES_PER_EPOCH,
+                              collate_fn=make_batch)
 
     model = Model(len(voices_loader.speakers))
     model.to(device)
