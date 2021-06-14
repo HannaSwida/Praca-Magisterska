@@ -5,6 +5,7 @@ from timit_loader import TimitLoader
 from model import Model
 import torch
 from torch.utils.data import DataLoader
+import torch.nn.functional as Fun
 import torch.optim as optim
 import constants as consts
 import argparse
@@ -84,9 +85,13 @@ def main():
         for i, (batch, speakers) in enumerate(train_loader):
             print("Batch {}/{}   ".format(i + 1, BATCHES_PER_EPOCH), end="\r")
             optimizer.zero_grad()
-            loss = model(torch.tensor(batch, device=device), torch.tensor(speakers, dtype=torch.long, device=device))
-            print(loss)
-            loss.backward()
+            score_posp, score_negp, speakers_probs, speakers = model(torch.tensor(batch, device=device), torch.tensor(speakers, dtype=torch.long, device=device))
+            Exp = 1.0
+            Exn = 1.0
+            loss = Exp * (1.0 - score_posp) ** 2 + Exn * score_negp ** 2 + Fun.cross_entropy(speakers_probs, target=speakers.reshape(-1))
+            # loss = Exp * torch.log(score_posp) + Exn * torch.log(1-score_negp) + Fun.cross_entropy(speakers_probs, target=speakers.reshape(-1))
+            print(loss.mean())
+            loss.mean().backward()
             optimizer.step()
         save_checkpoint({
             'epoch': epoch + 1,
