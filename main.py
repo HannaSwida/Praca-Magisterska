@@ -86,11 +86,10 @@ def main():
             print("Batch {}/{}   ".format(i + 1, BATCHES_PER_EPOCH), end="\r")
             optimizer.zero_grad()
             score_posp, score_negp, speakers_probs, speakers = model(torch.tensor(batch, device=device), torch.tensor(speakers, dtype=torch.long, device=device))
-            Exp = 1.0
-            Exn = 1.0
-            loss = Exp * (1.0 - score_posp) ** 2 + Exn * score_negp ** 2 + Fun.cross_entropy(speakers_probs, target=speakers.reshape(-1))
-            # loss = Exp * torch.log(score_posp) + Exn * torch.log(1-score_negp) + Fun.cross_entropy(speakers_probs, target=speakers.reshape(-1))
+
+            loss = loss_fn(score_negp, score_posp, speakers, speakers_probs)
             print(loss.mean())
+
             loss.mean().backward()
             optimizer.step()
         save_checkpoint({
@@ -98,6 +97,15 @@ def main():
             'state_dict': model.state_dict(),
             'optimizer': optimizer.state_dict(),
         }, filename="./checkpoints/checkpoint_e{}.pth.tar".format(epoch))
+
+def loss_fn(score_negp, score_posp, speakers, speakers_probs):
+    # loss = Exp * torch.log(score_posp) + Exn * torch.log(1-score_negp) + Fun.cross_entropy(speakers_probs, target=speakers.reshape(-1))
+    criterion = torch.nn.CrossEntropyLoss()
+
+    Exp = 1.0
+    Exn = 1.0
+    return Exp * (1.0 - score_posp) ** 2 + Exn * score_negp ** 2 + \
+           criterion(speakers_probs, target=speakers.reshape(-1))
 
 
 if __name__ == "__main__":
