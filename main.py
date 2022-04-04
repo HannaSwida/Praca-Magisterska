@@ -99,13 +99,9 @@ def main():
         }, filename="./checkpoints/checkpoint_e{}.pth.tar".format(epoch))
 
 def loss_fn(score_negp, score_posp, speakers, speakers_probs):
-    # loss = Exp * torch.log(score_posp) + Exn * torch.log(1-score_negp) + Fun.cross_entropy(speakers_probs, target=speakers.reshape(-1))
-    criterion = torch.nn.CrossEntropyLoss()
 
-    Exp = 1.0
-    Exn = 1.0
-    return Exp * (1.0 - score_posp) ** 2 + Exn * score_negp ** 2 + \
-           criterion(speakers_probs, target=speakers.reshape(-1))
+    ## próba z 27.03.2022. Wzór nr (3) z https://arxiv.org/pdf/1812.00271.pdf
+    return torch.mean(torch.log(score_posp)) + torch.mean(torch.log(1-score_negp))
 
 
 if __name__ == "__main__":
