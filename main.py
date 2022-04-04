@@ -88,7 +88,7 @@ def main():
             score_posp, score_negp, speakers_probs, speakers = model(torch.tensor(batch, device=device), torch.tensor(speakers, dtype=torch.long, device=device))
 
             loss = loss_fn(score_negp, score_posp, speakers, speakers_probs)
-            print(loss.mean())
+            print("Loss mean: ", loss.mean())
 
             loss.mean().backward()
             optimizer.step()
