@@ -20,13 +20,15 @@ class Model(nn.Module):
         speakers_probs = self.classifier(embeddings)
         embeddings = embeddings.reshape((BATCHES_PER_EPOCH, 3, constants.embedding_size))
         S1U1 = embeddings[:, 0, :]
+        #print("S1U1",S1U1)
         S1U2 = embeddings[:, 1, :]
-        S2U1 = embeddings[:, 2, :]
+        #print("S1U2",S1U2)
+        Srand = embeddings[:, 2, :]
+       # print("S2U1",S2U1)
         posp = torch.cat((S1U1, S1U2), 1)
-        negp = torch.cat((S1U1, S2U1), 1)
+        negp = torch.cat((S1U1, Srand), 1)
         score_posp = self.discriminator(posp)
         score_negp = self.discriminator(negp)
-
         return score_posp, score_negp, speakers_probs, speakers
 
 
@@ -48,7 +50,6 @@ class Encoder(nn.Module):
     def forward(self, x):
         x = self.input_norm(x)
         x = self.sinc_convolution(x)
-        #print(x.shape)
         x = self.layer_norm1(x)
         x = self.convolution2(x)
         x = self.layer_norm2(x)
@@ -59,6 +60,7 @@ class Encoder(nn.Module):
         x = self.lr(x)
         x = self.fc2(x)
         out = self.lr(x)
+        #print("out from Encoder forward {}".format(x))
         return out
 
 
@@ -71,6 +73,7 @@ class Classifier(nn.Module):
     def forward(self, x):
         x = Fun.relu(self.fc1(x))
         x = Fun.softmax(self.proj(x), dim=1)
+       #print("x from Classifier forward {}".format(x))
         return x
 
 
@@ -81,6 +84,10 @@ class Discriminator(nn.Module):
         self.proj = nn.Linear(2 * constants.embedding_size, 1)
 
     def forward(self, x):
+        #print("disc forward", x)
         x = Fun.relu(self.fc1(x))
+       # print("disc forward relu", x)
         x = self.proj(x)
+       # print("disc forward proj", x)
+        #print("x from Discriminator forward {}".format(x))
         return x

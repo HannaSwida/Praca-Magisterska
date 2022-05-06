@@ -7,14 +7,16 @@ from torch.utils.data import Dataset, DataLoader
 
 def load(path, num_samples):
     wav, sr = librosa.load(path, sr=16000)
-    # #print(wav.shape)
-    # librosa.display.waveplot(wav, sr)
-    # plt.show()
+
+    #print(wav.shape)
+    librosa.display.waveplot(wav, sr)
+    #plt.show()
     start = random.randint(0, wav.shape[0] - num_samples)
     #print("shape of wav:", wav.shape[0])
     #print("num_samples:", num_samples)
     #print("start", start)
     #print("return", wav[start: (start + num_samples)])
+    #print(wav[start: (start + num_samples)])
     return wav[start: (start + num_samples)]
 
 
@@ -38,6 +40,7 @@ class VoxCelebLoader(Dataset):
                 speakers[speaker_dir.name] = speaker_utterances
 
         self.speakers = speakers
+        #print(speakers)
         self.speaker_list = list(sorted(speakers.keys()))
 
     def speaker_to_id(self, speaker_name):
@@ -46,6 +49,7 @@ class VoxCelebLoader(Dataset):
     def __getitem__(self, _):
         # (3 utterances, samples), (3 speaker labels)
         [speaker1, speaker2] = random.sample(list(self.speakers.keys()), 2)
+        #print(speaker1, speaker2)
         [speaker1utt1, speaker1utt2] = random.sample(self.speakers[speaker1], 2)
         speaker2utt1 = random.choice(self.speakers[speaker2])
 

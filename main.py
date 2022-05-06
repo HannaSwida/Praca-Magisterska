@@ -22,7 +22,7 @@ parser.add_argument('--epochs', default=90, type=int, metavar='N',
                     help='number of total epochs to run')
 parser.add_argument('--start-epoch', default=0, type=int, metavar='N',
                     help='manual epoch number (useful on restarts)')
-parser.add_argument('--lr', '--learning-rate', default=0.1, type=float,
+parser.add_argument('--lr', '--learning-rate', default=0.001, type=float,
                     metavar='LR', help='initial learning rate', dest='lr')
 parser.add_argument('--resume', default='', type=str, metavar='PATH',
                     help='path to latest checkpoint (default: none)')
@@ -79,11 +79,17 @@ def main():
     def save_checkpoint(state, filename):
         torch.save(state, filename)
 
+    scheduler = torch.optim.lr_scheduler.ExponentialLR(optimizer, gamma=0.9)
+    print(len(voices_loader))
+
     model.train()
     for epoch in range(args.start_epoch, args.start_epoch + args.epochs):
         print("Epoch {}/{}:".format(epoch + 1, args.start_epoch + args.epochs))
+        print(scheduler.get_last_lr())
         for i, (batch, speakers) in enumerate(train_loader):
-            print("Batch {}/{}   ".format(i + 1, BATCHES_PER_EPOCH), end="\r")
+            if i >= BATCHES_PER_EPOCH:
+                break
+            print("Batch {}/{}   ".format(i + 1, BATCHES_PER_EPOCH))
             optimizer.zero_grad()
             score_posp, score_negp, speakers_probs, speakers = model(torch.tensor(batch, device=device), torch.tensor(speakers, dtype=torch.long, device=device))
 
@@ -97,11 +103,12 @@ def main():
             'state_dict': model.state_dict(),
             'optimizer': optimizer.state_dict(),
         }, filename="./checkpoints/checkpoint_e{}.pth.tar".format(epoch))
+    scheduler.step()
 
 def loss_fn(score_negp, score_posp, speakers, speakers_probs):
 
     ## próba z 27.03.2022. Wzór nr (3) z https://arxiv.org/pdf/1812.00271.pdf
-    return torch.mean(torch.log(score_posp)) + torch.mean(torch.log(1-score_negp))
+   return torch.mean(torch.log(score_posp)) + torch.mean(torch.log(1-score_negp))
 
 
 if __name__ == "__main__":
