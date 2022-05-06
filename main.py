@@ -79,13 +79,14 @@ def main():
     def save_checkpoint(state, filename):
         torch.save(state, filename)
 
-    scheduler = torch.optim.lr_scheduler.ExponentialLR(optimizer, gamma=0.9)
+    criterion = torch.nn.BCELoss()
+
+    scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer, 'min')
     print(len(voices_loader))
 
     model.train()
     for epoch in range(args.start_epoch, args.start_epoch + args.epochs):
         print("Epoch {}/{}:".format(epoch + 1, args.start_epoch + args.epochs))
-        print(scheduler.get_last_lr())
         for i, (batch, speakers) in enumerate(train_loader):
             if i >= BATCHES_PER_EPOCH:
                 break
@@ -103,7 +104,7 @@ def main():
             'state_dict': model.state_dict(),
             'optimizer': optimizer.state_dict(),
         }, filename="./checkpoints/checkpoint_e{}.pth.tar".format(epoch))
-    scheduler.step()
+    scheduler.step(loss)
 
 def loss_fn(score_negp, score_posp, speakers, speakers_probs):
 
