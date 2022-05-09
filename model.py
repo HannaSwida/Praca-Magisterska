@@ -79,7 +79,7 @@ class Classifier(nn.Module):
 
 class Discriminator(nn.Module):
     def __init__(self):
-        super(Discriminator,- self).__init__()
+        super(Discriminator, self).__init__()
         self.fc1 = nn.Linear(2 * constants.embedding_size, 2 * constants.embedding_size)
         self.proj = nn.Linear(2 * constants.embedding_size, 1)
 
