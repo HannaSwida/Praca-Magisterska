@@ -11,7 +11,7 @@ import constants as consts
 import argparse
 import os
 import numpy as np
-from constants import BATCHES_PER_EPOCH
+from constants import BATCHES_PER_EPOCH, BATCHES
 
 parser = argparse.ArgumentParser(description='Praca magisterska')
 parser.add_argument('--loader', default='voxceleb',
@@ -57,7 +57,7 @@ def main():
     train_loader = DataLoader(dataset=voices_loader,
                               shuffle=True,
                               num_workers=2,
-                              batch_size=BATCHES_PER_EPOCH,
+                              batch_size=BATCHES,
                               collate_fn=make_batch)
 
     model = Model(len(voices_loader.speakers))
@@ -109,7 +109,9 @@ def main():
 def loss_fn(score_negp, score_posp, speakers, speakers_probs):
 
     ## próba z 27.03.2022. Wzór nr (3) z https://arxiv.org/pdf/1812.00271.pdf
-   return torch.mean(torch.log(score_posp)) + torch.mean(torch.log(1-score_negp))
+    #print(torch.log(1-score_negp))
+    #print(score_negp)
+    return (torch.mean(torch.log(score_posp))) + torch.mean(torch.log(1-score_negp))
 
 
 if __name__ == "__main__":

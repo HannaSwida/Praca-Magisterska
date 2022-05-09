@@ -3,7 +3,7 @@ import torch as torch
 import torch.nn.functional as Fun
 from dnn_models import sinc_conv
 import constants
-from constants import BATCHES_PER_EPOCH
+from constants import BATCHES
 
 
 class Model(nn.Module):
@@ -15,10 +15,10 @@ class Model(nn.Module):
         self.classifier = Classifier(num_speakers)
 
     def forward(self, input, speakers):
-        input = input.reshape((BATCHES_PER_EPOCH * 3, 1, 3200))
+        input = input.reshape((BATCHES * 3, 1, 3200))
         embeddings = self.encoder(input)  # TODO
         speakers_probs = self.classifier(embeddings)
-        embeddings = embeddings.reshape((BATCHES_PER_EPOCH, 3, constants.embedding_size))
+        embeddings = embeddings.reshape((BATCHES, 3, constants.embedding_size))
         S1U1 = embeddings[:, 0, :]
         #print("S1U1",S1U1)
         S1U2 = embeddings[:, 1, :]
@@ -79,7 +79,7 @@ class Classifier(nn.Module):
 
 class Discriminator(nn.Module):
     def __init__(self):
-        super(Discriminator, self).__init__()
+        super(Discriminator,- self).__init__()
         self.fc1 = nn.Linear(2 * constants.embedding_size, 2 * constants.embedding_size)
         self.proj = nn.Linear(2 * constants.embedding_size, 1)
 
@@ -88,6 +88,7 @@ class Discriminator(nn.Module):
         x = Fun.relu(self.fc1(x))
        # print("disc forward relu", x)
         x = self.proj(x)
+        x = torch.sigmoid(x)
        # print("disc forward proj", x)
         #print("x from Discriminator forward {}".format(x))
         return x
