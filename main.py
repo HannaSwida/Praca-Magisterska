@@ -86,6 +86,7 @@ def main():
 
     model.train()
     for epoch in range(args.start_epoch, args.start_epoch + args.epochs):
+        loss_sum= 0
         print("Epoch {}/{}:".format(epoch + 1, args.start_epoch + args.epochs))
         for i, (batch, speakers) in enumerate(train_loader):
             if i >= BATCHES_PER_EPOCH:
@@ -95,23 +96,24 @@ def main():
             score_posp, score_negp, speakers_probs, speakers = model(torch.tensor(batch, device=device), torch.tensor(speakers, dtype=torch.long, device=device))
 
             loss = loss_fn(score_negp, score_posp, speakers, speakers_probs)
-            print("Loss mean: ", loss.mean())
-
+            loss_sum = loss_sum + loss
             loss.mean().backward()
+            print(loss.mean())
             optimizer.step()
+        print("Mean loss:", loss_sum/BATCHES_PER_EPOCH)
         save_checkpoint({
             'epoch': epoch + 1,
             'state_dict': model.state_dict(),
             'optimizer': optimizer.state_dict(),
         }, filename="./checkpoints/checkpoint_e{}.pth.tar".format(epoch))
-    scheduler.step(loss)
+        scheduler.step(loss)
 
 def loss_fn(score_negp, score_posp, speakers, speakers_probs):
 
     ## próba z 27.03.2022. Wzór nr (3) z https://arxiv.org/pdf/1812.00271.pdf
     #print(torch.log(1-score_negp))
     #print(score_negp)
-    return (torch.mean(torch.log(score_posp))) + torch.mean(torch.log(1-score_negp))
+    return (-torch.mean(torch.log(score_posp))) - torch.mean(torch.log(1-score_negp))
 
 
 if __name__ == "__main__":

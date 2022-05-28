@@ -3,6 +3,7 @@ import random
 import numpy as np
 import librosa, librosa.display
 import matplotlib.pyplot as plt
+import torch
 from torch.utils.data import Dataset, DataLoader
 
 
@@ -64,3 +65,44 @@ class TimitLoader(Dataset):
 
     def __len__(self):
         return 12800
+
+
+
+class TimitLoaderDvector(Dataset):
+    def __init__(self, data_path, batch_size=128, num_samples=3200, num_chunks=5): #numchunks
+        self.batch_size = batch_size
+        self.num_samples = num_samples
+        self.num_chunks = num_chunks
+
+        data_path = Path(data_path)
+        speakers = {}
+
+        for speaker_dir in data_path.iterdir():
+            speaker_utterances = []
+
+            for utterance_wav in speaker_dir.iterdir():
+                if utterance_wav.name.lower().endswith(".wav"):
+                    speaker_utterances.append(utterance_wav)
+
+            if len(speaker_utterances) > 2:
+                speakers[speaker_dir.name] = speaker_utterances
+
+        self.speakers = speakers
+        self.speaker_list = list(sorted(speakers.keys()))
+
+    def speaker_to_id(self, speaker_name):
+        return self.speaker_list.index(speaker_name)
+
+    def __getitem__(self, i):
+        # (3 utterances, samples), (3 speaker labels)
+        speaker1 = list(self.speakers.keys())[i]
+        utts = random.sample(self.speakers[speaker1], self.num_chunks)
+
+        speaker_utts = [
+            load(utt, self.num_samples) for utt in utts
+        ]
+
+        return torch.tensor(speaker_utts), self.speaker_to_id(speaker1)
+
+    def __len__(self):
+        return len(self.speakers)
