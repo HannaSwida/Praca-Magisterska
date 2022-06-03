@@ -105,7 +105,7 @@ def main():
             'epoch': epoch + 1,
             'state_dict': model.state_dict(),
             'optimizer': optimizer.state_dict(),
-        }, filename="./checkpoints/checkpoint_e{}.pth.tar".format(epoch))
+        }, filename="./checkpoints_{}/checkpoint_e{}.pth.tar".format(args.loader, epoch))
         scheduler.step(loss)
 
 def loss_fn(score_negp, score_posp, speakers, speakers_probs):

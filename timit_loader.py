@@ -89,6 +89,7 @@ class TimitLoaderDvector(Dataset):
 
         self.speakers = speakers
         self.speaker_list = list(sorted(speakers.keys()))
+        print(self.speaker_list.__sizeof__())
 
     def speaker_to_id(self, speaker_name):
         return self.speaker_list.index(speaker_name)
@@ -102,7 +103,7 @@ class TimitLoaderDvector(Dataset):
             load(utt, self.num_samples) for utt in utts
         ]
 
-        return torch.tensor(speaker_utts), self.speaker_to_id(speaker1)
+        return torch.tensor(speaker_utts), speaker1 #self.speaker_to_id(speaker1)
 
     def __len__(self):
         return len(self.speakers)

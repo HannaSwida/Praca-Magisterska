@@ -79,7 +79,7 @@ class Classifier(nn.Module):
 
     def generateVector(self, x):
         x = self.encode(x)
-        x = torch.nn.functional.normalize(x, -1) # x: B ns, nF
+        x = torch.nn.functional.normalize(x, dim=-1)  # x: B ns, nF
         x = torch.mean(x, 1)
         return x
 
