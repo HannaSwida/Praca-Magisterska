@@ -105,7 +105,7 @@ class VoxLoaderDvector(Dataset):
         speaker_utts = [
             load(utt, self.num_samples) for utt in utts
         ]
-        print("test", torch.tensor(speaker_utts), speaker1)
+        #print("test", torch.tensor(speaker_utts), speaker1)
         return torch.tensor(speaker_utts), speaker1 #self.speaker_to_id(speaker1)
 
     def __len__(self):

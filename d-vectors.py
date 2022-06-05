@@ -27,6 +27,16 @@ with open("randomfile.txt", "a") as o:
         o.write(str(dvectors))
         o.write("\nDVectors size: \n")
         o.write(str(dvectors.size()))
-    s = cos(dvectors[0].unsqueeze(0), dvectors[1].unsqueeze(0))
-    o.write("\ns \n")
-    o.write(str(s))
+    S = []
+    spk_line = []
+    for a in range(0, len(voices_loader.speakers)):
+        spk_line = []
+        for b in range(0, len(voices_loader.speakers)):
+            spk_line.append(cos(dvectors[a].unsqueeze(0), dvectors[b].unsqueeze(0)))
+        S.append(spk_line)
+
+#   import seaborn as sns
+#   import matplotlib.pylab as plt
+
+#   ax = sns.heatmap(S)
+#   plt.show()

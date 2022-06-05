@@ -22,6 +22,18 @@ with open("voxdebug.txt", "a") as o:
     model.eval()
     with torch.no_grad():
         dvectors = model.generateDVec(x) # chcemy tensor b/speakers
-    s = cos(dvectors[0].unsqueeze(0), dvectors[1].unsqueeze(0))
+    S = []
+    spk_line = []
+    for a in range(0, (len(voices_loader))):
+        spk_line = []
+        for b in range(0, (len(voices_loader))):
+            spk_line.append(cos(dvectors[a].unsqueeze(0), dvectors[b].unsqueeze(0)))
+        S.append(spk_line)
     o.write("\ns \n")
-    o.write(str(s))
+    o.write(str(S))
+
+#   import seaborn as sns
+#   import matplotlib.pylab as plt
+
+#   ax = sns.heatmap(S, linewidth=0.4)
+#   plt.show()
