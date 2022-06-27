@@ -14,9 +14,9 @@ import numpy as np
 from constants import BATCHES_PER_EPOCH, BATCHES
 
 parser = argparse.ArgumentParser(description='Praca magisterska')
-parser.add_argument('--loader', default='voxceleb',
+parser.add_argument('--loader', default='timit',
                     help='dataset type')
-parser.add_argument('--data', default='training-data/voxceleb',
+parser.add_argument('--data', default='training-data/timit',
                     help='dataset name')
 parser.add_argument('--epochs', default=90, type=int, metavar='N',
                     help='number of total epochs to run')

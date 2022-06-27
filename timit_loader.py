@@ -13,10 +13,6 @@ def load(path, num_samples):
     # librosa.display.waveplot(wav, sr)
     # plt.show()
     start = random.randint(0, wav.shape[0] - num_samples)
-    #print("shape of wav:", wav.shape[0])
-    #print("num_samples:", num_samples)
-    #print("start", start)
-    #print("return", wav[start: (start + num_samples)])
     return wav[start: (start + num_samples)]
 
 
@@ -95,10 +91,8 @@ class TimitLoaderDvector(Dataset):
         return self.speaker_list.index(speaker_name)
 
     def __getitem__(self, i):
-        # (3 utterances, samples), (3 speaker labels)
         speaker1 = list(self.speakers.keys())[i]
         utts = random.sample(self.speakers[speaker1], self.num_chunks)
-
         speaker_utts = [
             load(utt, self.num_samples) for utt in utts
         ]

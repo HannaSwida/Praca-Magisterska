@@ -24,16 +24,22 @@ with open("voxdebug.txt", "a") as o:
         dvectors = model.generateDVec(x) # chcemy tensor b/speakers
     S = []
     spk_line = []
+    speaker_utts_less =[]
     for a in range(0, (len(voices_loader))):
         spk_line = []
         for b in range(0, (len(voices_loader))):
             spk_line.append(cos(dvectors[a].unsqueeze(0), dvectors[b].unsqueeze(0)))
         S.append(spk_line)
+        speaker_utts_less.append(speaker_utts_arr[a])
     o.write("\ns \n")
     o.write(str(S))
 
-#   import seaborn as sns
-#   import matplotlib.pylab as plt
+    import seaborn as sns
+    import matplotlib.pylab as plt
 
-#   ax = sns.heatmap(S, linewidth=0.4)
-#   plt.show()
+    plt.title('Heatmap of S', fontsize=20)  # title with fontsize 20
+
+    plt.ylabel('Speakers', fontsize=15)  # y-axis label with fontsize 15
+    print(len(name_arr))
+    ax = sns.heatmap(S, yticklabels=name_arr, linewidth=0.4,cmap="Blues")
+    plt.show()
