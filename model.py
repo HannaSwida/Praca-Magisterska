@@ -22,6 +22,7 @@ class Model(nn.Module):
         return self.classifier.generateVector(embeddings) #dvectors
 
     def forward(self, input, speakers):
+        print("input size", input.shape)
         input = input.reshape((BATCHES * 3, 1, 3200))
         embeddings = self.encoder(input)  # TODO
         speakers_probs = self.classifier(embeddings)

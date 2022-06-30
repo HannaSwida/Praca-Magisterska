@@ -34,6 +34,7 @@ parser.add_argument('--resume', default='', type=str, metavar='PATH',
 def make_batch(items):
     samples = [item[0] for item in items]
     speakers = [item[1] for item in items]
+    print(len(speakers[0]))
     return np.array(samples), np.array(speakers)
 
 

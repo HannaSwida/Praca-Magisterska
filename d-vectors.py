@@ -5,7 +5,7 @@ from timit_loader import TimitLoaderDvector
 #path = "C:/Users/hanna/POLIBUDA/MAGISTERKA/Magisterka_python/checkpoints/checkpoint_e20.pth.tar"
 path = "C:/Users/hanna/POLIBUDA/MAGISTERKA/Magisterka_python/checkpoints_timit_old/checkpoint_e43.pth.tar"
 with open("randomfile.txt", "a") as o:
-    voices_loader = TimitLoaderDvector('training-data/timit')
+    voices_loader = TimitLoaderDvector('testing-data/timit')
     o.write("voices loader: \n ")
     o.write(str(len(voices_loader)))
     speaker_utts_arr = []
@@ -37,15 +37,13 @@ with open("randomfile.txt", "a") as o:
         S.append(spk_line)
     print("cos(dvectors[0].unsqueeze(0), dvectors[0].unsqueeze(0))", cos(dvectors[0].unsqueeze(0), dvectors[0].unsqueeze(0)))
     print("DVEC len:", len(dvectors[0].unsqueeze(0)[0]))
-    print("DVEC len:", len(dvectors[0]))
+    print("DVEC len:", len(dvectors))
     print("voices_loader[0].shape", len(voices_loader[0]))
 
     import seaborn as sns
     import matplotlib.pylab as plt
 
-    plt.title('S dla 50 speakerów', fontsize=20)  # title with fontsize 20
-
+    plt.title('S dla 50 speakers', fontsize=20)  # title with fontsize 20
     plt.ylabel('Speakers', fontsize=15)  # y-axis label with fontsize 15
-    print(len(name_arr))
     ax = sns.heatmap(S, yticklabels=name_arr[50:100], xticklabels=name_arr[50:100], linewidth=0.4,cmap="Blues")
    # plt.show()
