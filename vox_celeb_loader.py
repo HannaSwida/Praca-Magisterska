@@ -17,7 +17,8 @@ def load(path, num_samples):
     #print("num_samples:", num_samples)
     #print("start", start)
     #print("return", wav[start: (start + num_samples)])
-    #print(wav[start: (start + num_samples)])
+    print(wav[start: (start + num_samples)])
+
     return wav[start: (start + num_samples)]
 
 

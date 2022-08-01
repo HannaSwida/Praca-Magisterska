@@ -14,9 +14,9 @@ import numpy as np
 from constants import BATCHES_PER_EPOCH, BATCHES
 
 parser = argparse.ArgumentParser(description='Praca magisterska')
-parser.add_argument('--loader', default='timit',
+parser.add_argument('--loader', default='voxceleb',
                     help='dataset type')
-parser.add_argument('--data', default='training-data/timit',
+parser.add_argument('--data', default='training-data/vox2/dev/aac',
                     help='dataset name')
 parser.add_argument('--epochs', default=90, type=int, metavar='N',
                     help='number of total epochs to run')
@@ -61,7 +61,7 @@ def main():
                               batch_size=BATCHES,
                               collate_fn=make_batch)
 
-    model = Model(len(voices_loader.speakers))
+    model = Model(168)
     model.to(device)
 
     optimizer = optim.RMSprop(model.parameters(), lr=args.lr, alpha=consts.alpha, eps=1e-07)
@@ -85,29 +85,32 @@ def main():
     scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer, 'min')
     print(len(voices_loader))
 
-    model.train()
-    for epoch in range(args.start_epoch, args.start_epoch + args.epochs):
-        loss_sum= 0
-        print("Epoch {}/{}:".format(epoch + 1, args.start_epoch + args.epochs))
-        for i, (batch, speakers) in enumerate(train_loader):
-            if i >= BATCHES_PER_EPOCH:
-                break
-            print("Batch {}/{}   ".format(i + 1, BATCHES_PER_EPOCH))
-            optimizer.zero_grad()
-            score_posp, score_negp, speakers_probs, speakers = model(torch.tensor(batch, device=device), torch.tensor(speakers, dtype=torch.long, device=device))
+    with open("loss.txt", "a") as lossFile:
+        model.train()
+        for epoch in range(args.start_epoch, args.start_epoch + args.epochs):
+            loss_sum= 0
+            lossFile.append("Epoch {}/{}:".format(epoch + 1, args.start_epoch + args.epochs),"\n")
+            print("Epoch {}/{}:".format(epoch + 1, args.start_epoch + args.epochs))
+            for i, (batch, speakers) in enumerate(train_loader):
+                if i >= BATCHES_PER_EPOCH:
+                    break
+                print("Batch {}/{}   ".format(i + 1, BATCHES_PER_EPOCH))
+                optimizer.zero_grad()
+                score_posp, score_negp, speakers_probs, speakers = model(torch.tensor(batch, device=device), torch.tensor(speakers, dtype=torch.long, device=device))
 
-            loss = loss_fn(score_negp, score_posp, speakers, speakers_probs)
-            loss_sum = loss_sum + loss
-            loss.mean().backward()
-            print(loss.mean())
-            optimizer.step()
-        print("Mean loss:", loss_sum/BATCHES_PER_EPOCH)
-        save_checkpoint({
-            'epoch': epoch + 1,
-            'state_dict': model.state_dict(),
-            'optimizer': optimizer.state_dict(),
-        }, filename="./checkpoints_{}/checkpoint_e{}.pth.tar".format(args.loader, epoch))
-        scheduler.step(loss)
+                loss = loss_fn(score_negp, score_posp, speakers, speakers_probs)
+                loss_sum = loss_sum + loss
+                loss.mean().backward()
+                print(loss.mean())
+                optimizer.step()
+            print("Mean loss:", loss_sum/BATCHES_PER_EPOCH)
+            lossFile.append(loss_sum/BATCHES_PER_EPOCH, "\n")
+            save_checkpoint({
+                'epoch': epoch + 1,
+                'state_dict': model.state_dict(),
+                'optimizer': optimizer.state_dict(),
+            }, filename="./checkpoints_{}/checkpoint_test{}.pth.tar".format(args.loader, epoch))
+            scheduler.step(loss)
 
 def loss_fn(score_negp, score_posp, speakers, speakers_probs):
 
