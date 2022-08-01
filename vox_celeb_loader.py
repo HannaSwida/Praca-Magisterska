@@ -35,7 +35,7 @@ class VoxCelebLoader(Dataset):
 
             for video_dir in speaker_dir.iterdir():
                 for utterance_wav in video_dir.iterdir():
-                    if utterance_wav.name.endswith(".wav"):
+                    if utterance_wav.name.endswith(".m4a"):
                         speaker_utterances.append(utterance_wav)
 
             if len(speaker_utterances) > 2:

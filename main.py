@@ -16,7 +16,7 @@ from constants import BATCHES_PER_EPOCH, BATCHES
 parser = argparse.ArgumentParser(description='Praca magisterska')
 parser.add_argument('--loader', default='voxceleb',
                     help='dataset type')
-parser.add_argument('--data', default='training-data/vox2/dev/aac',
+parser.add_argument('--data', default='./training-data/timit',
                     help='dataset name')
 parser.add_argument('--epochs', default=90, type=int, metavar='N',
                     help='number of total epochs to run')
@@ -89,7 +89,7 @@ def main():
         model.train()
         for epoch in range(args.start_epoch, args.start_epoch + args.epochs):
             loss_sum= 0
-            lossFile.append("Epoch {}/{}:".format(epoch + 1, args.start_epoch + args.epochs),"\n")
+            lossFile.write("Epoch {}/{}:".format(epoch + 1, args.start_epoch + args.epochs) + "\n")
             print("Epoch {}/{}:".format(epoch + 1, args.start_epoch + args.epochs))
             for i, (batch, speakers) in enumerate(train_loader):
                 if i >= BATCHES_PER_EPOCH:
@@ -104,7 +104,7 @@ def main():
                 print(loss.mean())
                 optimizer.step()
             print("Mean loss:", loss_sum/BATCHES_PER_EPOCH)
-            lossFile.append(loss_sum/BATCHES_PER_EPOCH, "\n")
+            lossFile.write(str(loss_sum/BATCHES_PER_EPOCH) + "\n")
             save_checkpoint({
                 'epoch': epoch + 1,
                 'state_dict': model.state_dict(),
