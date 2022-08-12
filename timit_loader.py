@@ -50,7 +50,7 @@ class TimitLoader(Dataset):
             speaker_utterances = []
 
             for utterance_wav in speaker_dir.iterdir():
-                if utterance_wav.name.lower().endswith(".wav"):
+                if utterance_wav.name.lower().endswith(".m4a"):
                     speaker_utterances.append(utterance_wav)
 
             if len(speaker_utterances) > 2:

@@ -35,7 +35,7 @@ class VoxCelebLoader(Dataset):
 
             for video_dir in speaker_dir.iterdir():
                 for utterance_wav in video_dir.iterdir():
-                    if utterance_wav.name.endswith(".m4a"):
+                    if utterance_wav.name.endswith(".wav"):
                         speaker_utterances.append(utterance_wav)
 
             if len(speaker_utterances) > 2:
@@ -101,8 +101,9 @@ class VoxLoaderDvector(Dataset):
     def __getitem__(self, i):
         # (3 utterances, samples), (3 speaker labels)
         speaker1 = list(self.speakers.keys())[i]
+        print("self.speakers[speaker1]",self.speakers[speaker1])
         utts = random.sample(self.speakers[speaker1], self.num_chunks)
-
+        print("UTTS", utts)
         speaker_utts = [
             load(utt, self.num_samples) for utt in utts
         ]

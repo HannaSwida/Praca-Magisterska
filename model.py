@@ -16,16 +16,16 @@ class Model(nn.Module):
 
     def generateDVec(self, x):
         batch_size, num_chunks, features  = x.shape
-        x = x.reshape((batch_size * num_chunks, 1, features))
+        x = x.reshape((batch_size * num_chunks, 1, features)).to("cuda:0")
         embeddings = self.encoder(x)  # TODO
         embeddings = embeddings.reshape(batch_size, num_chunks, -1)
-        return self.classifier.generateVector(embeddings) #dvectors
+        return self.classifier.generateVector(embeddings.to("cuda:0")) #dvectors
 
     def forward(self, input, speakers):
         print("input size", input.shape)
         input = input.reshape((BATCHES * 3, 1, 3200))
-        embeddings = self.encoder(input)  # TODO
-        speakers_probs = self.classifier(embeddings)
+        embeddings = self.encoder(input.to("cuda:0"))  # TODO
+        speakers_probs = self.classifier(embeddings.to("cuda:0"))
         embeddings = embeddings.reshape((BATCHES, 3, constants.embedding_size))
         S1U1 = embeddings[:, 0, :]
         #print("S1U1",S1U1)
@@ -67,7 +67,7 @@ class Encoder(nn.Module):
         x = self.fc1(x)
         x = self.lr(x)
         x = self.fc2(x)
-        out = self.lr(x)
+        out = self.lr(x.to("cuda:0"))
         #print("out from Encoder forward {}".format(x))
         return out
 
