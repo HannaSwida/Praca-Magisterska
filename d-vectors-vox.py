@@ -5,7 +5,7 @@ import sys
 print(sys.path)
 path = "C:/Users/hanna/POLIBUDA/MAGISTERKA/Magisterka_python/checkpoints_voxceleb/checkpoint_test89.pth.tar"
 with open("voxdebug.txt", "a") as o:
-    voices_loader = VoxLoaderDvector('training-data/voxceleb')
+    voices_loader = VoxLoaderDvector('training-data/test')
     o.write("voices loader: \n ")
     o.write(str(len(voices_loader)))
     speaker_utts_arr = []

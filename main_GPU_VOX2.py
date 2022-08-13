@@ -1,7 +1,6 @@
 #!/usr/bin/env python3.8
 # python ./main.py --data .\training-data\timit --loader timit
 from vox_celeb_loadervox1toCuda import VoxCelebLoader
-from timit_loader import TimitLoader
 from model import Model
 import torch
 from torch.utils.data import DataLoader
@@ -16,7 +15,7 @@ from constants import BATCHES_PER_EPOCH, BATCHES
 parser = argparse.ArgumentParser(description='Praca magisterska')
 parser.add_argument('--loader', default='voxceleb',
                     help='dataset type')
-parser.add_argument('--data', default='./vox2/dev/aac',
+parser.add_argument('--data', default='../vox2/dev/aac',
                     help='dataset name')
 parser.add_argument('--epochs', default=90, type=int, metavar='N',
                     help='number of total epochs to run')
@@ -51,7 +50,6 @@ def main():
 
     Loader = ({
         "voxceleb": VoxCelebLoader,
-        "timit": TimitLoader,
     })[args.loader]
 
     voices_loader = Loader(args.data)
@@ -62,13 +60,13 @@ def main():
                               batch_size=BATCHES,
                               collate_fn=make_batch)
 
-    model = Model(168)
+    model = Model(3)
     model.to(device)
-    assert next(model.parameters()).device == 'cuda:0'
 
-    print("MODEL TO DEVICE", model.to(device))
+    print("model ok")
+
     #####
-    #OPTIM TRY
+    # OPTIM TRY
     def optimizer_to(optim, device):
         # move optimizer to device
         for param in optim.state.values():
@@ -89,6 +87,7 @@ def main():
     optimizer = optim.RMSprop(model.parameters(), lr=args.lr, alpha=consts.alpha, eps=1e-07)
     ####OPT TRY
     optimizer_to(optimizer, device)
+    print("Optimizer done")
     if args.resume:
         if os.path.isfile(args.resume):
             print("Loading given checkpoint '{}'".format(args.resume))
@@ -104,43 +103,51 @@ def main():
         torch.save(state, filename)
 
     criterion = torch.nn.BCELoss()
-
+    print("crit OK")
     scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer, 'min')
     # print(len(voices_loader))
 
     with open("vox2_GPU_loss.txt", "a") as o:
         model.train()
+        print("model train OK")
         for epoch in range(args.start_epoch, args.start_epoch + args.epochs):
             loss_sum = 0
             o.writelines("Epoch {}/{}:".format(epoch + 1, args.start_epoch + args.epochs) + "\n")
             print("Epoch {}/{}:".format(epoch + 1, args.start_epoch + args.epochs))
+            print(scheduler.get_lr())
             for i, (batch, speakers) in enumerate(train_loader):
+                print(i)
+                print("in batch")
                 if i >= BATCHES_PER_EPOCH:
                     break
                 print("Batch {}/{}   ".format(i + 1, BATCHES_PER_EPOCH))
                 optimizer.zero_grad()
+                print("zero grad OK")
                 score_posp, score_negp, speakers_probs, speakers = model(
                     torch.tensor(batch, device=device).to("cuda:0"),
-                    torch.tensor(speakers, dtype=torch.long, device=device).to("cuda:0")).to("cuda:0")
-
-
+                    torch.tensor(speakers, dtype=torch.long, device=device).to("cuda:0"))
+                print("score posp... OK")
                 loss = loss_fn(score_negp, score_posp, speakers, speakers_probs)
                 loss_sum = loss_sum + loss
                 loss.mean().backward()
+                print("loss mean backward ok")
                 print(loss.mean())
                 optimizer.step()
+                print("optimizer.step ok")
             print("Mean loss:", loss_sum / BATCHES_PER_EPOCH)
             o.writelines(str(loss_sum / BATCHES_PER_EPOCH) + "\n")
             save_checkpoint({
                 'epoch': epoch + 1,
                 'state_dict': model.state_dict(),
                 'optimizer': optimizer.state_dict(),
-            }, filename="./VOX2_GPU_CHECKPOINTS/checkpoint_test{}.pth.tar".format(args.loader, epoch))
+            }, filename="./VOX2_GPU_CHECKPOINTS/checkpoint_test{}.pth.tar".format(epoch))
             scheduler.step(loss)
+
+        print("FAIL...")
 
 
 def loss_fn(score_negp, score_posp, speakers, speakers_probs):
-    ## prĂ„â€šÄąâ€šba z 27.03.2022. WzĂ„â€šÄąâ€šr nr (3) z https://arxiv.org/pdf/1812.00271.pdf
+    ## prÄ‚Ĺ‚ba z 27.03.2022. WzÄ‚Ĺ‚r nr (3) z https://arxiv.org/pdf/1812.00271.pdf
     # print(torch.log(1-score_negp))
     # print(score_negp)
     return (-torch.mean(torch.log(score_posp))) - torch.mean(torch.log(1 - score_negp))

@@ -10,14 +10,14 @@ def load(path, num_samples):
     wav, sr = librosa.load(path, sr=16000)
 
     #print(wav.shape)
-    librosa.display.waveplot(wav, sr)
+    #librosa.display.waveplot(wav, sr)
     #plt.show()
     start = random.randint(0, wav.shape[0] - num_samples)
     #print("shape of wav:", wav.shape[0])
     #print("num_samples:", num_samples)
     #print("start", start)
     #print("return", wav[start: (start + num_samples)])
-    print(wav[start: (start + num_samples)])
+    #print(wav[start: (start + num_samples)])
 
     return wav[start: (start + num_samples)]
 
@@ -42,7 +42,7 @@ class VoxCelebLoader(Dataset):
                 speakers[speaker_dir.name] = speaker_utterances
 
         self.speakers = speakers
-        #print(speakers)
+        print(speakers)
         self.speaker_list = list(sorted(speakers.keys()))
 
     def speaker_to_id(self, speaker_name):
@@ -65,6 +65,7 @@ class VoxCelebLoader(Dataset):
             self.speaker_to_id(speaker1),
             self.speaker_to_id(speaker2)
         ]
+        print(triple)
         return triple, speaker_labels
 
     def __len__(self):
@@ -101,14 +102,13 @@ class VoxLoaderDvector(Dataset):
     def __getitem__(self, i):
         # (3 utterances, samples), (3 speaker labels)
         speaker1 = list(self.speakers.keys())[i]
-        print("self.speakers[speaker1]",self.speakers[speaker1])
         utts = random.sample(self.speakers[speaker1], self.num_chunks)
-        print("UTTS", utts)
+
         speaker_utts = [
             load(utt, self.num_samples) for utt in utts
         ]
         #print("test", torch.tensor(speaker_utts), speaker1)
-        return torch.tensor(speaker_utts), speaker1 #self.speaker_to_id(speaker1)
+        return torch.tensor(speaker_utts).to("cuda:0"), speaker1 #self.speaker_to_id(speaker1)
 
     def __len__(self):
         return len(self.speakers)

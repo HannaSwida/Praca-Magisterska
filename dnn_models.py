@@ -18,12 +18,12 @@ def flip(x, dim):
 
 
 def sinc(band, t_right):
-    y_right = torch.sin(2 * math.pi * band * t_right) / (2 * math.pi * band * t_right)
-    y_left = flip(y_right, 0)
+    y_right = torch.sin(2 * math.pi * band.to("cuda:0") * t_right.to("cuda:0")).to("cuda:0") / (2 * math.pi * band.to("cuda:0") * t_right.to("cuda:0")).to("cuda:0")
+    y_left = flip(y_right.to("cuda:0"), 0).to("cuda:0")
 
-    y = torch.cat([y_left, Variable(torch.ones(1)), y_right])
+    y = torch.cat([y_left.to("cuda:0"), Variable(torch.ones(1).to("cuda:0")), y_right.to("cuda:0")]).to("cuda:0")
 
-    return y
+    return y.to("cuda:0")
 
 
 class SincConv_fast(nn.Module):
@@ -134,8 +134,8 @@ class SincConv_fast(nn.Module):
         high = torch.clamp(low + self.min_band_hz + torch.abs(self.band_hz_), self.min_low_hz, self.sample_rate / 2)
         band = (high - low)[:, 0]
 
-        f_times_t_low = torch.matmul(low, self.n_)
-        f_times_t_high = torch.matmul(high, self.n_)
+        f_times_t_low = torch.matmul(low, self.n_).to("cuda:0")
+        f_times_t_high = torch.matmul(high, self.n_).to("cuda:0")
 
         band_pass_left = ((torch.sin(f_times_t_high) - torch.sin(f_times_t_low)) / (
                     self.n_ / 2)) * self.window_  # Equivalent of Eq.4 of the reference paper (SPEAKER RECOGNITION FROM RAW WAVEFORM WITH SINCNET). I just have expanded the sinc and simplified the terms. This way I avoid several useless computations.
@@ -151,7 +151,7 @@ class SincConv_fast(nn.Module):
 
         return F.conv1d(waveforms, self.filters, stride=self.stride,
                         padding=self.padding, dilation=self.dilation,
-                        bias=None, groups=1)
+                        bias=None, groups=1).to("cuda:0")
 
 
 class sinc_conv(nn.Module):
@@ -178,7 +178,7 @@ class sinc_conv(nn.Module):
         self.fs = fs
 
     def forward(self, x):
-        filters = Variable(torch.zeros((self.N_filt, self.Filt_dim)))
+        filters = Variable(torch.zeros((self.N_filt, self.Filt_dim)).to("cuda:0"))
         N = self.Filt_dim
         t_right = Variable(torch.linspace(1, (N - 1) / 2, steps=int((N - 1) / 2)) / self.fs)
 
@@ -195,17 +195,17 @@ class sinc_conv(nn.Module):
         window = Variable(window.float())
 
         for i in range(self.N_filt):
-            low_pass1 = 2 * filt_beg_freq[i].float() * sinc(filt_beg_freq[i].float() * self.freq_scale, t_right)
-            low_pass2 = 2 * filt_end_freq[i].float() * sinc(filt_end_freq[i].float() * self.freq_scale, t_right)
-            band_pass = (low_pass2 - low_pass1)
+            low_pass1 = 2 * filt_beg_freq[i].float().to("cuda:0") * sinc(filt_beg_freq[i].float() * self.freq_scale, t_right).to("cuda:0")
+            low_pass2 = 2 * filt_end_freq[i].float().to("cuda:0") * sinc(filt_end_freq[i].float() * self.freq_scale, t_right).to("cuda:0")
+            band_pass = (low_pass2.to("cuda:0") - low_pass1.to("cuda:0"))
 
-            band_pass = band_pass / torch.max(band_pass)
+            band_pass = band_pass / torch.max(band_pass).to("cuda:0")
 
-            filters[i, :] = band_pass * window
+            filters[i, :] = band_pass.to("cuda:0") * window.to("cuda:0")
 
-        out = F.conv1d(x, filters.view(self.N_filt, 1, self.Filt_dim))
+        out = F.conv1d(x.to("cuda:0"), filters.view(self.N_filt, 1, self.Filt_dim).to("cuda:0")).to("cuda:0")
 
-        return out
+        return out.to("cuda:0")
 
 
 def act_fun(act_type):

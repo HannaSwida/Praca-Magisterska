@@ -23,21 +23,21 @@ class Model(nn.Module):
 
     def forward(self, input, speakers):
         print("input size", input.shape)
-        input = input.reshape((BATCHES * 3, 1, 3200))
-        embeddings = self.encoder(input.to("cuda:0"))  # TODO
-        speakers_probs = self.classifier(embeddings.to("cuda:0"))
-        embeddings = embeddings.reshape((BATCHES, 3, constants.embedding_size))
+        input = input.reshape((BATCHES * 3, 1, 3200)).to("cuda:0")
+        embeddings = self.encoder(input.to("cuda:0")).to("cuda:0")  # TODO
+        speakers_probs = self.classifier(embeddings.to("cuda:0")).to("cuda:0")
+        embeddings = embeddings.reshape((BATCHES, 3, constants.embedding_size)).to("cuda:0")
         S1U1 = embeddings[:, 0, :]
         #print("S1U1",S1U1)
         S1U2 = embeddings[:, 1, :]
         #print("S1U2",S1U2)
         Srand = embeddings[:, 2, :]
        # print("S2U1",S2U1)
-        posp = torch.cat((S1U1, S1U2), 1)
-        negp = torch.cat((S1U1, Srand), 1)
-        score_posp = self.discriminator(posp)
-        score_negp = self.discriminator(negp)
-        return score_posp, score_negp, speakers_probs, speakers
+        posp = torch.cat((S1U1, S1U2), 1).to("cuda:0")
+        negp = torch.cat((S1U1, Srand), 1).to("cuda:0")
+        score_posp = self.discriminator(posp).to("cuda:0")
+        score_negp = self.discriminator(negp).to("cuda:0")
+        return score_posp.to("cuda:0"), score_negp.to("cuda:0"), speakers_probs.to("cuda:0"), speakers.to("cuda:0")
 
 
 class Encoder(nn.Module):
@@ -56,20 +56,21 @@ class Encoder(nn.Module):
         self.layer_norm3 = nn.LayerNorm((60, 2942))
 
     def forward(self, x):
-        x = self.input_norm(x)
-        x = self.sinc_convolution(x)
-        x = self.layer_norm1(x)
-        x = self.convolution2(x)
-        x = self.layer_norm2(x)
-        x = self.convolution3(x)
-        x = self.layer_norm3(x)
-        x = x.mean(2)
-        x = self.fc1(x)
-        x = self.lr(x)
-        x = self.fc2(x)
+        x = x.to("cuda:0")
+        x = self.input_norm(x).to("cuda:0")
+        x = self.sinc_convolution(x).to("cuda:0")
+        x = self.layer_norm1(x).to("cuda:0")
+        x = self.convolution2(x).to("cuda:0")
+        x = self.layer_norm2(x).to("cuda:0")
+        x = self.convolution3(x).to("cuda:0")
+        x = self.layer_norm3(x).to("cuda:0")
+        x = x.mean(2).to("cuda:0")
+        x = self.fc1(x).to("cuda:0")
+        x = self.lr(x).to("cuda:0")
+        x = self.fc2(x).to("cuda:0")
         out = self.lr(x.to("cuda:0"))
         #print("out from Encoder forward {}".format(x))
-        return out
+        return out.to("cuda:0")
 
 
 class Classifier(nn.Module):
