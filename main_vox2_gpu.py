@@ -15,7 +15,7 @@ from constants import BATCHES_PER_EPOCH, BATCHES
 parser = argparse.ArgumentParser(description='Praca magisterska')
 parser.add_argument('--loader', default='voxceleb',
                     help='dataset type')
-parser.add_argument('--data', default='../vox2/dev/aac',
+parser.add_argument('--data', default='./vox2/dev/aac',
                     help='dataset name')
 parser.add_argument('--epochs', default=90, type=int, metavar='N',
                     help='number of total epochs to run')
@@ -38,6 +38,7 @@ def make_batch(items):
 
 
 def main():
+    print(torch.cuda.device_count())
     args = parser.parse_args()
 
     if torch.cuda.is_available():
@@ -60,7 +61,7 @@ def main():
                               batch_size=BATCHES,
                               collate_fn=make_batch)
 
-    model = Model(3)
+    model = Model(866)
     model.to(device)
 
     print("model ok")
@@ -110,11 +111,11 @@ def main():
     with open("vox2_GPU_loss.txt", "a") as o:
         model.train()
         print("model train OK")
-        for epoch in range(args.start_epoch, args.start_epoch + args.epochs):
+        for  epoch in range(args.start_epoch, args.start_epoch + args.epochs):
             loss_sum = 0
+            print("LR", optimizer.param_groups[0]['lr'])
             o.writelines("Epoch {}/{}:".format(epoch + 1, args.start_epoch + args.epochs) + "\n")
             print("Epoch {}/{}:".format(epoch + 1, args.start_epoch + args.epochs))
-            print(scheduler.get_lr())
             for i, (batch, speakers) in enumerate(train_loader):
                 print(i)
                 print("in batch")
@@ -147,7 +148,7 @@ def main():
 
 
 def loss_fn(score_negp, score_posp, speakers, speakers_probs):
-    ## prÄ‚Ĺ‚ba z 27.03.2022. WzÄ‚Ĺ‚r nr (3) z https://arxiv.org/pdf/1812.00271.pdf
+    ## prĂ„â€šÄąâ€šba z 27.03.2022. WzĂ„â€šÄąâ€šr nr (3) z https://arxiv.org/pdf/1812.00271.pdf
     # print(torch.log(1-score_negp))
     # print(score_negp)
     return (-torch.mean(torch.log(score_posp))) - torch.mean(torch.log(1 - score_negp))

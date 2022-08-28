@@ -42,7 +42,7 @@ class VoxCelebLoader(Dataset):
                 speakers[speaker_dir.name] = speaker_utterances
 
         self.speakers = speakers
-        print(speakers)
+        #print(speakers)
         self.speaker_list = list(sorted(speakers.keys()))
 
     def speaker_to_id(self, speaker_name):
@@ -65,7 +65,6 @@ class VoxCelebLoader(Dataset):
             self.speaker_to_id(speaker1),
             self.speaker_to_id(speaker2)
         ]
-        print(triple)
         return triple, speaker_labels
 
     def __len__(self):
