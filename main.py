@@ -1,7 +1,6 @@
 #!/usr/bin/env python3.8
 #python ./main.py --data .\training-data\timit --loader timit
 from vox_celeb_loader import VoxCelebLoader
-from timit_loader import TimitLoader
 from model import Model
 import torch
 from torch.utils.data import DataLoader
@@ -50,7 +49,7 @@ def main():
 
     Loader = ({
         "voxceleb": VoxCelebLoader,
-        "timit": TimitLoader,
+        #"timit": TimitLoader,
     })[args.loader]
     
     voices_loader = Loader(args.data)

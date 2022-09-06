@@ -28,11 +28,8 @@ class Model(nn.Module):
         speakers_probs = self.classifier(embeddings)
         embeddings = embeddings.reshape((BATCHES, 3, constants.embedding_size))
         S1U1 = embeddings[:, 0, :]
-        #print("S1U1",S1U1)
         S1U2 = embeddings[:, 1, :]
-        #print("S1U2",S1U2)
         Srand = embeddings[:, 2, :]
-       # print("S2U1",S2U1)
         posp = torch.cat((S1U1, S1U2), 1)
         negp = torch.cat((S1U1, Srand), 1)
         score_posp = self.discriminator(posp)
