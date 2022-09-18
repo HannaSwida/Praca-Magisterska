@@ -17,8 +17,10 @@ class Model(nn.Module):
     def generateDVec(self, x):
         batch_size, num_chunks, features  = x.shape
         x = x.reshape((batch_size * num_chunks, 1, features))
+        print("generaet")
         embeddings = self.encoder(x)  # TODO
         embeddings = embeddings.reshape(batch_size, num_chunks, -1)
+        print("embeddings", embeddings)
         return self.classifier.generateVector(embeddings) #dvectors
 
     def forward(self, input, speakers):
@@ -72,6 +74,7 @@ class Encoder(nn.Module):
 class Classifier(nn.Module):
     def __init__(self, num_speakers):
         super(Classifier, self).__init__()
+        print("num spk clas", num_speakers)
         self.fc1 = nn.Linear(constants.embedding_size, constants.embedding_size) #inner layer
         self.proj = nn.Linear(constants.embedding_size, num_speakers)
 
