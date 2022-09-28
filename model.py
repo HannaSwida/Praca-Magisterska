@@ -74,21 +74,15 @@ class Encoder(nn.Module):
 class Classifier(nn.Module):
     def __init__(self, num_speakers):
         super(Classifier, self).__init__()
-        print("num spk clas", num_speakers)
         self.fc1 = nn.Linear(constants.embedding_size, constants.embedding_size) #inner layer
         self.proj = nn.Linear(constants.embedding_size, num_speakers)
 
-    def generateVector(self, x):
-        x = self.encode(x)
-        x = torch.nn.functional.normalize(x, dim=-1)  # x: B ns, nF
-        x = torch.mean(x, 1)
-        return x
 
     def encode(self, x):
         return Fun.relu(self.fc1(x))
 
     def forward(self, x):
-        x = self.encode(x) #hidden representation
+        x = self.encode(x)
         x = Fun.softmax(self.proj(x), dim=1)
        #print("x from Classifier forward {}".format(x))
         return x
@@ -103,9 +97,6 @@ class Discriminator(nn.Module):
     def forward(self, x):
         #print("disc forward", x)
         x = Fun.relu(self.fc1(x))
-       # print("disc forward relu", x)
         x = self.proj(x)
         x = torch.sigmoid(x)
-        # print("disc forward proj", x)
-        #print("x from Discriminator forward {}".format(x))
         return x
