@@ -63,7 +63,7 @@ class Encoder(nn.Module):
         x = self.lr(x)
         x = self.fc2(x)
         out = self.lr(x)
-        print("out from Encoder forward {}".format(out))
+        #print("out from Encoder forward {}".format(out))
         return out
 
 class Discriminator(nn.Module):
