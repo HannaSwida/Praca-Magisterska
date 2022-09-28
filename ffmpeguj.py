@@ -1,12 +1,21 @@
 import os
+import shutil
 from os.path import exists
+from pathlib import Path
 
-for person in os.listdir("vox2/dev/aac"):
-    for dir in os.listdir("vox2/dev/aac/{}".format(person)):
-        for file in os.listdir("vox2/dev/aac/{}/{}".format(person,dir)):
-            if (file.endswith(".m4a") and not exists("{}.wav".format(file))): #or .avi, .mpeg, whatever.
-                print("vox2/dev/aac/{}/{}/{}".format(person, dir, file))
-                os.system("ffmpeg -n -i vox2/dev/aac/{}/{}/{} vox2/dev/aac/{}/{}/{}.wav -ar 16000".format(person,dir,file,person,dir,file[:-4]))
-            else:
-                continue
+a = 9999999
+b=9999.1
+for person in os.listdir("training-data/Libri"):
+    for dir in os.listdir("training-data/Libri/{}".format(person)):
+        isFlac = True
+        for file in os.listdir("training-data/Libri/{}/{}".format(person,dir)):
+            [os.removedirs(p) for p in Path(target_path).glob('**/*') if p.is_dir() and len(list(p.iterdir())) == 0]
+
+print(a)
+
+a = 9999999
+b=9999.1
+[os.removedirs(p) for p in Path("training-data/Libri/").glob('**/*') if p.is_dir() and len(list(p.iterdir())) == 0]
+
+print(a)
 

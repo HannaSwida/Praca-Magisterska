@@ -5,10 +5,10 @@ import sys
 from sklearn.metrics import roc_curve
 from scipy.optimize import brentq
 from scipy.interpolate import interp1d
-print(sys.path)
-path = "C:/Users/hanna/POLIBUDA/MAGISTERKA/Magisterka_python/checkpoints/checkpoint_e20.pth.tar"
+#print(sys.path)
+path = "C:/Users/hanna/POLIBUDA/MAGISTERKA/Magisterka_python/checkpoints_voxceleb/vox2/checkpoint_test17.pth.tar"
 with open("voxdebug.txt", "a") as o:
-    voices_loader = VoxLoaderDvector('training-data/test2')
+    voices_loader = VoxLoaderDvector('testing-data/test')
     o.write("voices loader: \n ")
     o.write(str(len(voices_loader)))
     speaker_utts_arr = []
@@ -18,9 +18,9 @@ with open("voxdebug.txt", "a") as o:
         name_arr.append(speaker_name)
     x = torch.stack(speaker_utts_arr)
     cos = torch.nn.CosineSimilarity(dim=1, eps=1e-6)
-    checkpoint = torch.load(path)
+    checkpoint = torch.load(path,map_location=torch.device('cpu'))
 
-    model = Model(462)
+    model = Model(5994)
     model.to("cpu")
     model.load_state_dict(checkpoint['state_dict'])
     model.eval()
@@ -39,15 +39,15 @@ with open("voxdebug.txt", "a") as o:
         spk_line = []
         for b in range(0, (len(voices_loader))):
             #spk_line.append(cos(dvectors[a].unsqueeze(0), dvectors[b].unsqueeze(0)))
-            if (float(format(float(cos(dvectors[a].unsqueeze(0), dvectors[b].unsqueeze(0))),".10f")))> float(0.99999900):
+            if (float(format(float(cos(dvectors[a].unsqueeze(0), dvectors[b].unsqueeze(0))),".10f")))> float(0.9900):
                 spk_line.append(1)
             else: spk_line.append(0)
-            print(cos(dvectors[a].unsqueeze(0), dvectors[b].unsqueeze(0)))
+            #print(cos(dvectors[a].unsqueeze(0), dvectors[b].unsqueeze(0)))
         S.append(spk_line)
         speaker_utts_less.append(speaker_utts_arr[a])
     o.write("\ns \n")
     o.write(str(S))
-    print(spk_line)
+    #print(spk_line)
 
 
 
