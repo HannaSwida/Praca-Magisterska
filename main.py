@@ -15,7 +15,7 @@ from constants import BATCHES_PER_EPOCH, BATCHES
 parser = argparse.ArgumentParser(description='Praca magisterska')
 parser.add_argument('--loader', default='voxceleb',
                     help='dataset type')
-parser.add_argument('--data', default='./training-data/timit',
+parser.add_argument('--data', default='./testing-data/test',
                     help='dataset name')
 parser.add_argument('--epochs', default=90, type=int, metavar='N',
                     help='number of total epochs to run')
@@ -95,9 +95,8 @@ def main():
                     break
                 print("Batch {}/{}   ".format(i + 1, BATCHES_PER_EPOCH))
                 optimizer.zero_grad()
-                score_posp, score_negp, speakers_probs, speakers = model(torch.tensor(batch, device=device), torch.tensor(speakers, dtype=torch.long, device=device))
-
-                loss = loss_fn(score_negp, score_posp, speakers, speakers_probs)
+                score_posp, score_negp, speakers = model(torch.tensor(batch, device=device), torch.tensor(speakers, dtype=torch.long, device=device))
+                loss = loss_fn(score_negp, score_posp, speakers)
                 loss_sum = loss_sum + loss
                 loss.mean().backward()
                 print(loss.mean())
@@ -111,7 +110,7 @@ def main():
             }, filename="./checkpoints_{}/checkpoint_test{}.pth.tar".format(args.loader, epoch))
             scheduler.step(loss)
 
-def loss_fn(score_negp, score_posp, speakers, speakers_probs):
+def loss_fn(score_negp, score_posp, speakers):
 
     ## próba z 27.03.2022. Wzór nr (3) z https://arxiv.org/pdf/1812.00271.pdf
     #print(torch.log(1-score_negp))

@@ -25,9 +25,9 @@ class Model(nn.Module):
 
     def forward(self, input, speakers):
         print("input size", input.shape)
-        input = input.reshape((BATCHES * 3, 1, 3200))
+        input = input.reshape((BATCHES * 3, 1, 16000))
         embeddings = self.encoder(input)  # TODO
-        speakers_probs = self.classifier(embeddings)
+        #speakers_probs = self.classifier(embeddings)
         embeddings = embeddings.reshape((BATCHES, 3, constants.embedding_size))
         S1U1 = embeddings[:, 0, :]
         S1U2 = embeddings[:, 1, :]
@@ -36,7 +36,7 @@ class Model(nn.Module):
         negp = torch.cat((S1U1, Srand), 1)
         score_posp = self.discriminator(posp)
         score_negp = self.discriminator(negp)
-        return score_posp, score_negp, speakers_probs, speakers
+        return score_posp, score_negp, speakers
 
 
 class Encoder(nn.Module):
@@ -49,10 +49,10 @@ class Encoder(nn.Module):
         self.fc1 = nn.Linear(60, constants.embedding_size * 2)
         self.fc2 = nn.Linear(constants.embedding_size * 2, constants.embedding_size)
 
-        self.input_norm = nn.LayerNorm((1, 3200))
-        self.layer_norm1 = nn.LayerNorm((80, 2950))
-        self.layer_norm2 = nn.LayerNorm((60, 2946))
-        self.layer_norm3 = nn.LayerNorm((60, 2942))
+        self.input_norm = nn.LayerNorm((1, 16000))
+        self.layer_norm1 = nn.LayerNorm((80, 15750))
+        self.layer_norm2 = nn.LayerNorm((60, 15746))
+        self.layer_norm3 = nn.LayerNorm((60, 15742))
 
     def forward(self, x):
         x = self.input_norm(x)

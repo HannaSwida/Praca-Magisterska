@@ -16,7 +16,7 @@ def load(path, num_samples):
 
 
 class VoxCelebLoader(Dataset):
-    def __init__(self, data_path, batch_size=128, num_samples=3200):
+    def __init__(self, data_path, batch_size=128, num_samples=16000):
         self.batch_size = batch_size
         self.num_samples = num_samples
 
@@ -25,16 +25,16 @@ class VoxCelebLoader(Dataset):
 
         for speaker_dir in data_path.iterdir():
             speaker_utterances = []
-
             for video_dir in speaker_dir.iterdir():
                 for utterance_wav in video_dir.iterdir():
-                    if utterance_wav.name.endswith(".m4a"):
+                    if utterance_wav.name.endswith(".wav"):
                         speaker_utterances.append(utterance_wav)
 
             if len(speaker_utterances) > 2:
                 speakers[speaker_dir.name] = speaker_utterances
 
         self.speakers = speakers
+        print(len(speakers))
         self.speaker_list = list(sorted(speakers.keys()))
 
     def speaker_to_id(self, speaker_name):
