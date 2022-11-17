@@ -97,39 +97,19 @@ class Encoder(nn.Module):
        #self.batchNorm1 = nn.BatchNorm2d(100)
 
     def forward(self, x):
-        print(x.shape)
-        print(len(x))
         x = self.normalization1(x) #(nie jestem pewna czy normalizacja input tutaj czy po sincNet)
         x =SincNet(CNN_arch)
-        #x = SincNet(x)
         x = self.sinc_convolution(x)
-        print("2", x)
         x = self.normalization2(x)
-        print("3", x)
         x = self.convolution2(x)
-        print("4", x)
         x = self.normalization4(x)
         x = self.convolution3(x)
         x = self.normalization3(x)
-        print("n3", x.shape)
         x = self.lr(x)
-        print("lr", x.shape)
         x = self.normalization4(x)
         x = self.lr(x)
         x = self.batchNorm2(x)
         return x
-        #x = self.input_norm(x)
-        #x = self.sinc_convolution(x)
-        #x = self.layer_norm1(x)
-        #x = self.convolution2(x)
-        #x = self.layer_norm2(x)
-        #x = self.convolution3(x)
-        #x = self.layer_norm3(x)
-        #x = self.fc1(x)
-        #x = self.lr(x)
-        #x = self.fc2(x)
-        #out = self.lr(x)
-        #return out
 
 class Discriminator(nn.Module):
     def __init__(self):
