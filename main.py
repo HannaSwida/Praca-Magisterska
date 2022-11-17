@@ -1,5 +1,5 @@
 #!/usr/bin/env python3.8
-#python ./main.py --data .\training-data\timit --loader timit
+#pp.py ./main.py --data .\training-data\timit --loader timit
 from vox_celeb_loadervox1 import VoxCelebLoader
 from model import Model
 import torch
@@ -26,7 +26,7 @@ parser.add_argument('--resume', default='', type=str, metavar='PATH',
                     help='path to latest checkpoint (default: none)')
 
 
-# python main.py --lr 0.01
+# pp.py main.py --lr 0.01
 
 def make_batch(items):
     samples = [item[0] for item in items]
@@ -92,7 +92,7 @@ def main():
                 optimizer.zero_grad()
                 score_posp, score_negp, speakers = model(torch.tensor(batch, device=device), torch.tensor(speakers, dtype=torch.long, device=device))
                 loss = loss_fn(score_negp, score_posp, speakers)
-                print(score_negp, "sc neg", score_posp, "psp")
+                #print(score_negp, "sc neg", score_posp, "psp")
                 loss_sum = loss_sum + loss
                 loss.mean().backward()
                 optimizer.step()

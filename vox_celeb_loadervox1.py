@@ -11,7 +11,7 @@ def load(path, num_samples):
 
     start = random.randint(0, wav.shape[0] - num_samples)
 
-    print(wav.shape[0])
+    #print(wav.shape[0])
     return wav[start: (start + num_samples)]
 
 
@@ -52,7 +52,7 @@ class VoxCelebLoader(Dataset):
             self.speaker_to_id(speaker1),
             self.speaker_to_id(speaker2)
         ]
-        print("speaker_labels",speaker_labels)
+        #print("speaker_labels",speaker_labels)
         return triple, speaker_labels
 
     def __len__(self):
