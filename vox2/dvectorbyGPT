@@ -1,0 +1,37 @@
+import torch
+import torch.nn as nn
+import numpy as np
+
+# Load the pre-trained speaker-id network
+model = torch.load("checkpoint.pth.tar")
+
+# Get the last hidden layer
+last_hidden_layer = model.last_hidden_layer
+
+# Compute the d-vector for each speech chunk
+d_vectors = []
+for speech_chunk in speech_chunks:
+    # Feed the speech chunk through the network to get the last hidden layer
+    d_vector = last_hidden_layer(speech_chunk).detach().numpy()
+    d_vectors.append(d_vector)
+
+# Average the d-vectors for each speaker to get a speaker-dependent d-vector
+speaker_dependent_d_vectors = {}
+for speaker, speaker_d_vectors in d_vectors.items():
+    speaker_d_vector = np.mean(speaker_d_vectors, axis=0)
+    speaker_dependent_d_vectors[speaker] = speaker_d_vector
+
+# L2 normalize the speaker-dependent d-vectors
+for speaker, speaker_d_vector in speaker_dependent_d_vectors.items():
+    speaker_dependent_d_vectors[speaker] = speaker_d_vector / np.linalg.norm(speaker_d_vector)
+
+# Calculate the cosine similarity between the enrollment and test d-vectors
+def cosine_similarity(x, y):
+    return np.dot(x, y) / (np.linalg.norm(x) * np.linalg.norm(y))
+
+def speaker_verification(enrollment_d_vector, test_d_vector):
+    cosine_sim = cosine_similarity(enrollment_d_vector, test_d_vector)
+    if cosine_sim >= threshold:
+        return "Accepted"
+    else:
+        return "Rejected"
