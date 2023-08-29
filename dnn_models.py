@@ -5,6 +5,9 @@ import torch.nn as nn
 import sys
 from torch.autograd import Variable
 import math
+from enum import Enum
+
+device = torch.device("cuda")
 
 def flip(x, dim):
     xsize = x.size()
@@ -126,18 +129,18 @@ class SincConv_fast(nn.Module):
         features : `torch.Tensor` (batch_size, out_channels, n_samples_out)
             Batch of sinc filters activations.
         """
-
+        #print(waveforms.device, device)
         self.n_ = self.n_.to(waveforms.device)
 
         self.window_ = self.window_.to(waveforms.device)
 
-        low = self.min_low_hz  + torch.abs(self.low_hz_)
+        low = self.min_low_hz  + torch.abs(self.low_hz_).to(waveforms.device)
         
-        high = torch.clamp(low + self.min_band_hz + torch.abs(self.band_hz_),self.min_low_hz,self.sample_rate/2)
+        high = torch.clamp(low.to(waveforms.device) + self.min_band_hz + torch.abs(self.band_hz_).to(waveforms.device), self.min_low_hz, self.sample_rate/2)
         band=(high-low)[:,0]
         
-        f_times_t_low = torch.matmul(low, self.n_)
-        f_times_t_high = torch.matmul(high, self.n_)
+        f_times_t_low = torch.matmul(low.to(waveforms.device), self.n_.to(waveforms.device)).to(waveforms.device)
+        f_times_t_high = torch.matmul(high.to(waveforms.device), self.n_.to(waveforms.device)).to(waveforms.device)
 
         band_pass_left=((torch.sin(f_times_t_high)-torch.sin(f_times_t_low))/(self.n_/2))*self.window_ # Equivalent of Eq.4 of the reference paper (SPEAKER RECOGNITION FROM RAW WAVEFORM WITH SINCNET). I just have expanded the sinc and simplified the terms. This way I avoid several useless computations. 
         band_pass_center = 2*band.view(-1,1)
@@ -243,38 +246,64 @@ def act_fun(act_type):
  if act_type=="linear":
     return nn.LeakyReLU(1) # initializzed like this, but not used in forward!
             
+
             
 class LayerNorm(nn.Module):
 
     def __init__(self, features, eps=1e-6):
-        super(LayerNorm,self).__init__()
+        super(LayerNorm, self).__init__()
         self.gamma = nn.Parameter(torch.ones(features))
         self.beta = nn.Parameter(torch.zeros(features))
         self.eps = eps
 
     def forward(self, x):
-        print(type(x), "xaxa")
         mean = x.mean(-1, keepdim=True)
         std = x.std(-1, keepdim=True)
-        print("x: {}, gamma: {}, beta: {}".format(x.shape, self.gamma.shape, self.beta.shape))
-        return self.gamma * (x - mean) / (std + self.eps) + self.beta
+        device = x.device
+        return (self.gamma.to(device) * (x - mean) / (std + self.eps) + self.beta.to(device))
 
+
+class MLP_mode(Enum):
+   ENCODER = 1
+   DISCRIMINATOR = 2
 
 class MLP(nn.Module):
-    def __init__(self, options):
+
+    def load_config_for_encoder(self):
+        self.input_dim=6420 #128
+        self.fc_lay_g=[128]
+        self.fc_act_discrim=["relu"]
+        self.fc_lay=[2048,1024]
+        self.fc_drop=[0.0,0.0]
+        self.fc_use_batchnorm=[True,True]
+        self.fc_use_laynorm=[False,False]
+        self.fc_use_laynorm_inp=True # w DNN setup: "for all inputs", ale napisane przed "Next fully connected leaky relu. To nie wiem, czy mają być czy nie dla MLP.
+        self.fc_use_batchnorm_inp=False #Nie jestem pewna, tak jak wyżej napisane
+        self.fc_act=["leaky_relu","leaky_relu"]
+    
+    def load_config_for_discriminator(self):
+        self.input_dim=1024   # ?
+        self.fc_lay=[1024] #128
+        self.fc_drop=[0.0]
+        self.fc_use_batchnorm=[False]
+        self.fc_use_laynorm=[False]
+        self.fc_act=["relu"]
+        self.fc_use_batchnorm_inp = False
+        self.fc_use_laynorm_inp = True
+
+    def __init__(self, mode: MLP_mode):
         super(MLP, self).__init__()
-        print("konik pony")
+        self.MLP_mode = mode
         #self.input_dim=int(options['input_dim'])
-        self.fs = 16000
-        self.input_dim=int(self.fs * 200 / 1000.00)
-        self.fc_lay=[2048,2048,2048]
-        self.fc_drop=[0.0,0.0,0.0]
-        self.fc_use_batchnorm=[True,True,True]
-        self.fc_use_laynorm=[False,False,False]
-        self.fc_use_laynorm_inp=True
-        self.fc_use_batchnorm_inp=False
-        self.fc_act=["leaky_relu","leaky_relu","leaky_relu"]
-        
+        self.fs = 16000 
+        self.mode=mode
+        if mode == MLP_mode.ENCODER:
+            self.load_config_for_encoder()
+            print("MODE: ENCODER")
+        elif mode == MLP_mode.DISCRIMINATOR:
+            self.load_config_for_discriminator()
+            print("MODE: DISCRIMINATOR")
+       
        
         self.wx  = nn.ModuleList([])
         self.bn  = nn.ModuleList([])
@@ -282,36 +311,22 @@ class MLP(nn.Module):
         self.act = nn.ModuleList([])
         self.drop = nn.ModuleList([])
        
-
-       
-        # input layer normalization
         if self.fc_use_laynorm_inp:
-            #self.input_dim =?
-           self.ln0=LayerNorm(self.input_dim)
+            self.ln0=LayerNorm(self.input_dim)
           
-        # input batch normalization    
         if self.fc_use_batchnorm_inp:
            self.bn0=nn.BatchNorm1d([self.input_dim],momentum=0.05)
            
-           
         self.N_fc_lay=len(self.fc_lay)
-             
         current_input=self.input_dim
-        
-        # Initialization of hidden layers
         
         for i in range(self.N_fc_lay):
             
-         # dropout
-         self.drop.append(nn.Dropout(p=self.fc_drop[i]))
-         
-         # activation
+         self.drop.append(nn.Dropout(p=self.fc_drop[i]))         
          self.act.append(act_fun(self.fc_act[i]))
-         
-         
+
          add_bias=True
          
-         # layer norm initialization
          self.ln.append(LayerNorm(self.fc_lay[i]))
          self.bn.append(nn.BatchNorm1d(self.fc_lay[i],momentum=0.05))
          
@@ -319,88 +334,64 @@ class MLP(nn.Module):
              add_bias=False
          
               
-         # Linear operations
          self.wx.append(nn.Linear(current_input, self.fc_lay[i],bias=add_bias))
          
-         # weight initialization
          self.wx[i].weight = torch.nn.Parameter(torch.Tensor(self.fc_lay[i],current_input).uniform_(-np.sqrt(0.01/(current_input+self.fc_lay[i])),np.sqrt(0.01/(current_input+self.fc_lay[i]))))
          self.wx[i].bias = torch.nn.Parameter(torch.zeros(self.fc_lay[i]))
          
          current_input=self.fc_lay[i]
          
-         
+
     def forward(self, x):
-        
-      # Applying Layer/Batch Norm
-      if bool(self.fc_use_laynorm_inp):
-        x=self.ln0((x))
-        
-      if bool(self.fc_use_batchnorm_inp):
-        x=self.bn0((x))
-        
-      for i in range(self.N_fc_lay):
+        if self.fc_use_laynorm_inp:
+            x = self.ln0((x))
 
-        if self.fc_act[i]!='linear':
-            
-          if self.fc_use_laynorm[i]:
-           x = self.drop[i](self.act[i](self.ln[i](self.wx[i](x))))
-          
-          if self.fc_use_batchnorm[i]:
-           x = self.drop[i](self.act[i](self.bn[i](self.wx[i](x))))
-          
-          if self.fc_use_batchnorm[i]==False and self.fc_use_laynorm[i]==False:
-           x = self.drop[i](self.act[i](self.wx[i](x)))
-           
-        else:
-          if self.fc_use_laynorm[i]:
-           x = self.drop[i](self.ln[i](self.wx[i](x)))
-          
-          if self.fc_use_batchnorm[i]:
-           x = self.drop[i](self.bn[i](self.wx[i](x)))
-          
-          if self.fc_use_batchnorm[i]==False and self.fc_use_laynorm[i]==False:
-           x = self.drop[i](self.wx[i](x)) 
-          
-      return x
+        for i in range(self.N_fc_lay):
+            if self.fc_act[i] != 'linear':
+                if self.fc_use_batchnorm[i]:
+                    x = self.drop[i](self.act[i](self.bn[i](self.wx[i](x))))
+                else:
+                    x = self.drop[i](self.act[i](self.wx[i](x)))
+            else:
+                x = self.drop[i](self.wx[i](x))
+        return x
 
-
-
+    
 class SincNet(nn.Module):
     
     def __init__(self):
        super(SincNet,self).__init__()
-    
-       self.cnn_N_filt=[80,60,60]
-       print(type(self.cnn_N_filt), "TYPE")
+
+    #config:
+       self.cnn_N_filt=[80,60,60]           # Layers 
        self.cnn_len_filt=[251,5,5]
-       self.cnn_max_pool_len=[3,3,3]
-       
-       self.cnn_act=["leaky_relu","leaky_relu","leaky_relu"]
-       self.cnn_drop=[0.0,0.0,0.0]
-       
+       self.cnn_max_pool_len=[3,3,3]        # ?
+       self.cnn_drop=[0.0,0.0,0.0]          # nic nie
        self.cnn_use_laynorm=[True,True,True]
+
+       self.cnn_act=["leaky_relu","leaky_relu", "leaky_relu"]
+       
        self.cnn_use_batchnorm=[False,False,False]
-       self.cnn_use_laynorm_inp=[True]
-       self.cnn_use_batchnorm_inp=[False]
+       self.cnn_use_laynorm_inp=True
+       self.cnn_use_batchnorm_inp=False
        
        
        self.fs=16000
        self.input_dim=int(self.fs * 200 / 1000.00)
        
-       self.N_cnn_lay=len(self.cnn_N_filt)
+       self.N_cnn_lay=len(self.cnn_N_filt) #ilość warstw
        self.conv  = nn.ModuleList([])
        self.bn  = nn.ModuleList([])
        self.ln  = nn.ModuleList([])
        self.act = nn.ModuleList([])
        self.drop = nn.ModuleList([])
        
-             
+        #Layer normalization for input sample
        if self.cnn_use_laynorm_inp:
-            #self.input_dim = 3200
            self.ln0=LayerNorm(self.input_dim)
            
-       if self.cnn_use_batchnorm_inp:
-           self.bn0=nn.BatchNorm1d([self.input_dim],momentum=0.05)
+       #if self.cnn_use_batchnorm_inp:
+       #    self.bn0=nn.BatchNorm1d([self.input_dim],momentum=0.05)
            
        current_input=self.input_dim 
        
@@ -408,19 +399,15 @@ class SincNet(nn.Module):
          
          N_filt=int(self.cnn_N_filt[i])
          len_filt=int(self.cnn_len_filt[i])
-         
          # dropout
          self.drop.append(nn.Dropout(p=self.cnn_drop[i]))
-         
          # activation
-         self.act.append(act_fun(self.cnn_act[i]))
-                    
+         self.act.append(act_fun(self.cnn_act[i]))   
          # layer norm initialization         
          self.ln.append(LayerNorm([N_filt,
             int((current_input-self.cnn_len_filt[i]+1)/self.cnn_max_pool_len[i])]))
 
-         self.bn.append(nn.BatchNorm1d(N_filt,int((current_input-self.cnn_len_filt[i]+1)/self.cnn_max_pool_len[i]),momentum=0.05))
-            
+         self.bn.append(nn.BatchNorm1d(N_filt,int((current_input-self.cnn_len_filt[i]+1)/self.cnn_max_pool_len[i]),momentum=0.05)) 
 
          if i==0:
           self.conv.append(SincConv_fast(self.cnn_N_filt[0],self.cnn_len_filt[0],self.fs))
@@ -429,24 +416,22 @@ class SincNet(nn.Module):
           self.conv.append(nn.Conv1d(self.cnn_N_filt[i-1], self.cnn_N_filt[i], self.cnn_len_filt[i]))
           
          current_input=int((current_input-self.cnn_len_filt[i]+1)/self.cnn_max_pool_len[i])
-
          
        self.out_dim=current_input*N_filt
 
 
-
-    def forward(self, x):
-       batch=x.shape[0]
-       seq_len=x.shape[1]
+    def forward(self, input_tensor):
+       
+       batch=input_tensor.shape[0]
+       seq_len=input_tensor.shape[1]  #1
        
        if bool(self.cnn_use_laynorm_inp):
-        x=self.ln0((x))
+        # zawsze true
+        x=self.ln0(input_tensor).to(device)
         
        if bool(self.cnn_use_batchnorm_inp):
-        x=self.bn0((x))
-        
-       x=x.view(batch,1,seq_len)
-
+        x=self.bn0((x)).to(device)
+       x=x.view(batch,1,seq_len).to(device)
        
        for i in range(self.N_cnn_lay):
            
@@ -462,11 +447,7 @@ class SincNet(nn.Module):
          if self.cnn_use_batchnorm[i]==False and self.cnn_use_laynorm[i]==False:
           x = self.drop[i](self.act[i](F.max_pool1d(self.conv[i](x), self.cnn_max_pool_len[i])))
 
-       
        x = x.view(batch,-1)
 
        return x
-   
-
-    
    
